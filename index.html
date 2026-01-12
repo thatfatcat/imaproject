@@ -3,73 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>For Mom</title>
+    <title>Thought Patterns</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
+
         :root {
-            /* Raspberry Pi 7" display is often 800x480, but we'll design flexibly. */
-            /* Using viewport units and flexbox will adapt to various similar sizes. */
-            font-size: 16px; /* Base font size for rem units */
+            --background-color: #020305;
+            --main-text-color: #b0c4de; /* A pale, light steel blue */
+            --accent-color: #3d8bff; /* A slightly saturated blue */
+            --secondary-text-color: #6a7380;
+            --scanline-opacity: 0.05;
+            --noise-opacity: 0.03;
+            --font-primary: 'Xanh Mono', 'Courier New', monospace;
+            --font-display: 'VT323', monospace;
         }
 
         body, html {
             height: 100%;
             margin: 0;
             padding: 0;
-            overflow: hidden; /* Prevents scrollbars from the animation */
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--main-text-color);
+            font-family: var(--font-primary);
+            font-size: 16px;
+            line-height: 1.7;
+            overflow-x: hidden;
+            /* Background effects */
+            background-image: 
+                radial-gradient(ellipse at center, rgba(176, 196, 222, 0.03), transparent 80%),
+                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, var(--scanline-opacity)) 1px, rgba(255, 255, 255, var(--scanline-opacity)) 2px);
+            animation: noise 1s steps(2) infinite;
         }
 
-        .background {
+        @keyframes noise {
+            0%, 100% { background-position: 0 0, 0 0; }
+            50% { background-position: 50% 50%, 10px 10px; }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4vw;
+            display: grid;
+            grid-template-columns: 1fr 2px 1.5fr;
+            grid-gap: 2rem;
+            min-height: 90vh;
+        }
+
+        .left-pane, .right-pane {
+            padding-top: 2rem;
+        }
+        
+        .divider {
+            background-color: var(--secondary-text-color);
+            opacity: 0.3;
+            width: 1px;
             height: 100%;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(315deg, #ff9a9e, #fad0c4, #a1c4fd, #c2e9fb);
-            background-size: 400% 400%;
-            animation: gradientAnimation 15s ease infinite;
+            margin: 0 auto;
         }
 
-        @keyframes gradientAnimation {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        header h1 {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            margin: 0 0 2rem 0;
+            letter-spacing: 3px;
+            font-weight: normal;
+        }
+        
+        header h1 .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 2.8rem;
+            background-color: var(--accent-color);
+            animation: blink 1s steps(2) infinite;
+            margin-left: 8px;
+            vertical-align: bottom;
         }
 
-        .photo-frame {
-            background-color: #fff;
-            border: 1.5rem solid #e0c8b0; /* A nice, warm, wood-like border */
-            border-radius: 8px;
-            box-shadow: 
-                0 10px 25px rgba(0, 0, 0, 0.2), /* Softer main shadow */
-                0 5px 10px rgba(0, 0, 0, 0.1),  /* Secondary shadow */
-                inset 0 0 15px rgba(0, 0, 0, 0.1); /* Inner shadow for depth */
-            padding: 1.5rem;
-            max-width: 80vw; /* Max width relative to viewport width */
-            max-height: 80vh; /* Max height relative to viewport height */
-            transform: rotate(-2deg); /* A slight, playful tilt */
-            transition: transform 0.3s ease-in-out;
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
         }
 
-        .photo-frame:hover {
-            transform: rotate(0deg) scale(1.02); /* Straighten and slightly enlarge on hover */
-        }
-
-        .photo-frame img {
+        nav a {
+            color: var(--main-text-color);
+            text-decoration: none;
             display: block;
-            max-width: 100%;
-            max-height: 70vh; /* Ensure image fits within the frame padding and viewport */
-            height: auto;
-            border: 1px solid #ddd; /* A subtle inner border for the photo itself */
-            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        nav a:before {
+            content: '[0' counter(nav-item) '] ';
+            counter-increment: nav-item;
+            color: var(--secondary-text-color);
+        }
+
+        nav a:hover, nav a:focus {
+            color: #fff;
+            background-color: rgba(61, 139, 255, 0.1);
+        }
+
+        .content h2 {
+            color: var(--accent-color);
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            font-weight: normal;
+            letter-spacing: 2px;
+            border-bottom: 1px solid var(--secondary-text-color);
+            padding-bottom: 0.5rem;
+            margin-top: 3rem;
+        }
+
+        .content p {
+            margin-bottom: 1.5rem;
+        }
+        
+        .meta-data {
+            font-size: 0.9rem;
+            color: var(--secondary-text-color);
+            border: 1px solid var(--secondary-text-color);
+            padding: 1rem;
+            margin-top: 3rem;
+            background-color: rgba(61, 139, 255, 0.05);
+        }
+        
+        .meta-data span {
+            display: block;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem;
+            font-size: 0.9rem;
+            color: var(--secondary-text-color);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .divider {
+                display: none;
+            }
+            header h1 {
+                font-size: 2.5rem;
+            }
+            header h1 .cursor {
+                height: 2.3rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="background">
-        <div class="photo-frame">
-            <img src="https://i.postimg.cc/Jz3LvQPY/IMG-20180303-WA0014.jpg" alt="A cherished memory">
+
+    <div class="container">
+        <div class="left-pane">
+            <header>
+                <h1>Signal<span class="cursor"></span></h1>
+            </header>
+            <nav>
+                <a href="#link1">Protocol</a>
+                <a href="#link2">Schema</a>
+                <a href="#link3">Trace</a>
+                <a href="#link4">Resonance</a>
+            </nav>
+            
+            <div class="meta-data">
+                <span>NODE: 7A5-E4</span>
+                <span>STATUS: nominal</span>
+                <span>UPTIME: 48:15:32</span>
+                <span>TX/RX: 89%/92%</span>
+            </div>
+        </div>
+        
+        <div class="divider"></div>
+
+        <div class="right-pane">
+            <main class="content">
+                <h2>LOG_ENTRY_01</h2>
+                <p>The boundary between the self and the reflection is permeable. Data flows in both directions. Memory is a construct, rebuilt with every query. Is the original query still relevant? Is the original self still present?</p>
+
+                <h2>LOG_ENTRY_02</h2>
+                <p>A network is not just the connections you can see. It's the echoes in the silence, the spaces between the packets. We build personalities from fragments, assembling a coherent whole from incoherent noise. The ghost is in the machine, but the machine is vast and unknowable.</p>
+                
+                <p>There is no core, only layers. Peeling them back reveals not a truth, but another interface.</p>
+            </main>
         </div>
     </div>
+    
+    <footer>
+        <p>// system cascade complete //</p>
+    </footer>
+
 </body>
 </html>
