@@ -3,76 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>For Mom</title>
+    <title>Thorfinn</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            /* Raspberry Pi 7" display is often 800x480, but we'll design flexibly. */
-            /* Using viewport units and flexbox will adapt to various similar sizes. */
-            font-size: 16px; /* Base font size for rem units */
+            --background-color: #020305;
+            --main-text-color: #b0c4de;
+            --accent-color: #3d8bff;
+            --secondary-text-color: #6a7380;
+            --scanline-opacity: 0.05;
+            --noise-opacity: 0.03;
+            --font-primary: 'Xanh Mono', 'Courier New', monospace;
+            --font-display: 'VT323', monospace;
         }
-
         body, html {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden; /* Prevents scrollbars from the animation */
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
+            color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
+            line-height: 1.7; overflow: hidden;
+            background-image: 
+                radial-gradient(ellipse at center, rgba(176, 196, 222, 0.03), transparent 80%),
+                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, var(--scanline-opacity)) 1px, rgba(255, 255, 255, var(--scanline-opacity)) 2px);
+            animation: noise 1s steps(2) infinite;
         }
-
-        .background {
-            height: 100%;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(315deg, #ff9a9e, #fad0c4, #a1c4fd, #c2e9fb);
-            background-size: 400% 400%;
-            animation: gradientAnimation 15s ease infinite;
+        @keyframes noise {
+            0%, 100% { background-position: 0 0, 0 0; }
+            50% { background-position: 50% 50%, 10px 10px; }
         }
-
-        @keyframes gradientAnimation {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .photo-frame {
-            background-color: #fff;
-            border: 1.5rem solid #e0c8b0; /* A nice, warm, wood-like border */
-            border-radius: 8px;
-            box-shadow: 
-                0 10px 25px rgba(0, 0, 0, 0.2), /* Softer main shadow */
-                0 5px 10px rgba(0, 0, 0, 0.1),  /* Secondary shadow */
-                inset 0 0 15px rgba(0, 0, 0, 0.1); /* Inner shadow for depth */
-            padding: 1.5rem;
-            max-width: 80vw; /* Max width relative to viewport width */
-            max-height: 80vh; /* Max height relative to viewport height */
-            transform: rotate(-2deg); /* A slight, playful tilt */
-            transition: transform 0.3s ease-in-out;
-        }
-
-        .photo-frame:hover {
-            transform: rotate(0deg) scale(1.02); /* Straighten and slightly enlarge on hover */
-        }
-
-        .photo-frame img {
-            display: block;
-            max-width: 100%;
-            max-height: 70vh; /* Ensure image fits within the frame padding and viewport */
-            height: auto;
-            border: 1px solid #ddd; /* A subtle inner border for the photo itself */
-            box-shadow: 0 0 5px rgba(0,0,0,0.1);
-        }
+        #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .container, footer { position: relative; z-index: 1; }
+        .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
+        h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
+        p { margin-bottom: 1.5rem; width: 100%; }
+        footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
+        @media (max-width: 768px) { h1 { font-size: 2rem; } }
     </style>
 </head>
 <body>
-    <h3>Finally its fixed! Today you get this pic sorry</h3>
-    <div class="background">
-        <div class="photo-frame">
-            
-            <img src="https://i.postimg.cc/Jz3LvQPY/IMG-20180303-WA0014.jpg" alt="A cherished memory">
-            
-        </div>
+    <canvas id="matrix-canvas"></canvas>
+    <div class="container">
+        <h1>[MESSAGE_OF_THE_DAY]</h1>
+        <p>Today I saw Jane for the last time. It was hard, but I learned a lot from the time with her, and am excited to grow comfortable with being by myself. I have never been able to be alone and its time I develop that skill.</p>
     </div>
+    <footer><p>// end of transmission //</p></footer>
+    <script>
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const characters = '■□▲▼◆●◦←→↑↓ΣΩΦδαβγθλπμξψABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const fontSize = 12;
+        
+        class Ripple {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 0;
+                this.lifespan = 150;
+                this.initialLifespan = 150;
+                this.speed = 1.5;
+            }
+
+            update() {
+                this.radius += this.speed;
+                this.lifespan--;
+            }
+
+            draw() {
+                const opacity = Math.max(0, this.lifespan / this.initialLifespan) * 0.4;
+                ctx.strokeStyle = `rgba(61, 139, 255, ${opacity})`;
+                ctx.font = fontSize + 'px ' + getComputedStyle(document.body).fontFamily;
+                
+                const circumference = 2 * Math.PI * this.radius;
+                const charCount = Math.floor(circumference / (fontSize * 0.8));
+                
+                for (let i = 0; i < charCount; i++) {
+                    const angle = (i / charCount) * 2 * Math.PI;
+                    const charX = this.x + this.radius * Math.cos(angle);
+                    const charY = this.y + this.radius * Math.sin(angle);
+                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    ctx.save();
+                    ctx.translate(charX, charY);
+                    ctx.rotate(angle + Math.PI / 2);
+                    ctx.fillStyle = `rgba(61, 139, 255, ${opacity})`;
+                    ctx.fillText(char, 0, 0);
+                    ctx.restore();
+                }
+            }
+        }
+
+        const ripples = [];
+
+        function animate() {
+            ctx.fillStyle = 'rgba(2, 3, 5, 0.15)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (Math.random() > 0.98) {
+                ripples.push(new Ripple(Math.random() * canvas.width, Math.random() * canvas.height));
+            }
+            
+            for (let i = ripples.length - 1; i >= 0; i--) {
+                const r = ripples[i];
+                r.update();
+                r.draw();
+                if (r.lifespan <= 0) {
+                    ripples.splice(i, 1);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            ripples.length = 0;
+        });
+    </script>
 </body>
 </html>
