@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000; /* Black background for video */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Full viewport height */
+            overflow: hidden; /* Hide scrollbars if content overflows */
+        }
+        .video-container {
+            position: relative;
+            width: 80%; /* Adjust as needed */
+            padding-bottom: 45%; /* 16:9 aspect ratio (height / width * 100) for 80% width: 9/16 * 80% = 45% */
+            height: 0;
+            overflow: hidden;
+            max-width: 1200px; /* Max width for larger screens */
+            background: #000;
+        }
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 768px) {
+            .video-container {
+                width: 95%; /* Use more width on small screens */
+                padding-bottom: 53.4375%; /* 16:9 aspect ratio for 95% width */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/yhBSj8rt9f0?si=huOoVqynrHnZaZw1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </div>
+</body>
+</html>
