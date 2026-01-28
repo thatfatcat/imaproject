@@ -3,124 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thorfinn</title>
+    <title>Kittyman :3</title>
+    <meta http-equiv="refresh" content="3600">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
-        :root {
-            --background-color: #020305;
-            --main-text-color: #b0c4de;
-            --accent-color: #3d8bff;
-            --secondary-text-color: #6a7380;
-            --scanline-opacity: 0.05;
-            --noise-opacity: 0.03;
-            --font-primary: 'Xanh Mono', 'Courier New', monospace;
-            --font-display: 'VT323', monospace;
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0d1117; /* Dark background */
+            overflow: hidden;
+            font-family: 'VT323', monospace;
+            color: #ffffff; /* Default text color */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            position: relative;
         }
-        body, html {
-            height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
-            color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
-            line-height: 1.7; overflow: hidden;
-            background-image: 
-                radial-gradient(ellipse at center, rgba(176, 196, 222, 0.03), transparent 80%),
-                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, var(--scanline-opacity)) 1px, rgba(255, 255, 255, var(--scanline-opacity)) 2px);
-            animation: noise 1s steps(2) infinite;
+
+        #background-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
         }
-        @keyframes noise {
-            0%, 100% { background-position: 0 0, 0 0; }
-            50% { background-position: 50% 50%, 10px 10px; }
+
+        .content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background for readability */
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.7); /* Cyan glow */
         }
-        #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
-        .container, footer { position: relative; z-index: 1; }
-        .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
-        h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
-        p { margin-bottom: 1.5rem; width: 100%; }
-        footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
-        @media (max-width: 768px) { h1 { font-size: 2rem; } }
+
+        .main-text {
+            font-size: 2.5em;
+            color: #00ffff; /* Cyan text */
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff; /* Glowing effect */
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .sub-text {
+            font-size: 1.2em;
+            color: #ffffff;
+            margin-top: 10px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .main-text {
+                font-size: 1.8em;
+            }
+            .sub-text {
+                font-size: 1em;
+            }
+        }
     </style>
 </head>
 <body>
-    <canvas id="matrix-canvas"></canvas>
-    <div class="container">
-        <h1>[MESSAGE_OF_THE_DAY]</h1>
-        <p>Today I saw Jane for the last time. It was hard, but I learned a lot from the time with her, and am excited to grow comfortable with being by myself. I have never been able to be alone and its time I develop that skill.</p>
+    <canvas id="background-canvas"></canvas>
+    <div class="content">
+        <p class="main-text">Go on your computer to <a href="https://nonamer.xyz/kittyman/" target="_blank" style="color: #00ffff; text-decoration: underline; text-shadow: inherit;">https://nonamer.xyz/kittyman/</a></p>
     </div>
-    <footer><p>// end of transmission //</p></footer>
-    <script>
-        const canvas = document.getElementById('matrix-canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
 
-        const characters = '■□▲▼◆●◦←→↑↓ΣΩΦδαβγθλπμξψABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        const fontSize = 12;
-        
-        class Ripple {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.radius = 0;
-                this.lifespan = 150;
-                this.initialLifespan = 150;
-                this.speed = 1.5;
+    <script>
+        const canvas = document.getElementById('background-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        const particles = [];
+        const maxParticles = 100;
+        const connectDistance = 150; // Max distance to connect particles
+
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 1; // -0.5 to 0.5
+                this.vy = (Math.random() - 0.5) * 1;
+                this.radius = Math.random() * 2 + 1; // 1 to 3
+                this.color = `rgba(0, 255, 255, ${Math.random() * 0.5 + 0.5})`; // Cyan with varying opacity
             }
 
             update() {
-                this.radius += this.speed;
-                this.lifespan--;
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Bounce off edges
+                if (this.x < 0 || this.x > width) this.vx *= -1;
+                if (this.y < 0 || this.y > height) this.vy *= -1;
             }
 
             draw() {
-                const opacity = Math.max(0, this.lifespan / this.initialLifespan) * 0.4;
-                ctx.strokeStyle = `rgba(61, 139, 255, ${opacity})`;
-                ctx.font = fontSize + 'px ' + getComputedStyle(document.body).fontFamily;
-                
-                const circumference = 2 * Math.PI * this.radius;
-                const charCount = Math.floor(circumference / (fontSize * 0.8));
-                
-                for (let i = 0; i < charCount; i++) {
-                    const angle = (i / charCount) * 2 * Math.PI;
-                    const charX = this.x + this.radius * Math.cos(angle);
-                    const charY = this.y + this.radius * Math.sin(angle);
-                    const char = characters[Math.floor(Math.random() * characters.length)];
-                    ctx.save();
-                    ctx.translate(charX, charY);
-                    ctx.rotate(angle + Math.PI / 2);
-                    ctx.fillStyle = `rgba(61, 139, 255, ${opacity})`;
-                    ctx.fillText(char, 0, 0);
-                    ctx.restore();
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles.length = 0; // Clear existing particles
+            for (let i = 0; i < maxParticles; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function connectParticles() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i; j < particles.length; j++) {
+                    const p1 = particles[i];
+                    const p2 = particles[j];
+                    const distance = Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+
+                    if (distance < connectDistance) {
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = `rgba(0, 255, 255, ${1 - (distance / connectDistance)})`; // Fade connections
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
                 }
             }
         }
 
-        const ripples = [];
-
-        function animate() {
-            ctx.fillStyle = 'rgba(2, 3, 5, 0.15)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            if (Math.random() > 0.98) {
-                ripples.push(new Ripple(Math.random() * canvas.width, Math.random() * canvas.height));
-            }
+        function animateParticles() {
+            requestAnimationFrame(animateParticles);
+            ctx.clearRect(0, 0, width, height); // Clear canvas
             
-            for (let i = ripples.length - 1; i >= 0; i--) {
-                const r = ripples[i];
-                r.update();
-                r.draw();
-                if (r.lifespan <= 0) {
-                    ripples.splice(i, 1);
-                }
+            for (const particle of particles) {
+                particle.update();
+                particle.draw();
             }
-
-            requestAnimationFrame(animate);
+            connectParticles();
         }
-
-        animate();
 
         window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            ripples.length = 0;
+            resizeCanvas();
+            initParticles(); // Reinitialize particles on resize for better distribution
         });
+
+        resizeCanvas();
+        initParticles();
+        animateParticles();
     </script>
 </body>
 </html>
