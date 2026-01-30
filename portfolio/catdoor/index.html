@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story Fragment // Log</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
+
+        :root {
+            --background-color: #020305;
+            --main-text-color: #b0c4de; /* A pale, light steel blue */
+            --accent-color: #3d8bff; /* A slightly saturated blue */
+            --secondary-text-color: #6a7380;
+            --scanline-opacity: 0.05;
+            --noise-opacity: 0.03;
+            --font-primary: 'Xanh Mono', 'Courier New', monospace;
+            --font-display: 'VT323', monospace;
+        }
+
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--main-text-color);
+            font-family: var(--font-primary);
+            font-size: 16px;
+            line-height: 1.7;
+            overflow: hidden; /* Hide scrollbars caused by canvas/content overflow */
+            /* Background effects */
+            background-image: 
+                radial-gradient(ellipse at center, rgba(176, 196, 222, 0.03), transparent 80%),
+                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, var(--scanline-opacity)) 1px, rgba(255, 255, 255, var(--scanline-opacity)) 2px);
+            animation: noise 1s steps(2) infinite;
+        }
+
+        @keyframes noise {
+            0%, 100% { background-position: 0 0, 0 0; }
+            50% { background-position: 50% 50%, 10px 10px; }
+        }
+        
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* Behind content but above body background */
+        }
+
+        .container, footer {
+            position: relative;
+            z-index: 1; /* Ensure content is on top of the canvas */
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4vw;
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            margin: 0 0 2rem 0;
+            letter-spacing: 2px;
+            font-weight: normal;
+            border-bottom: 1px solid var(--secondary-text-color);
+            padding-bottom: 0.5rem;
+            align-self: stretch;
+        }
+        
+        p {
+            margin-bottom: 1.5rem;
+            width: 100%;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            font-size: 0.9rem;
+            color: var(--secondary-text-color);
+            margin-top: auto;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="matrix-canvas"></canvas>
+
+    <div class="container">
+        <h1>[LOG_ENTRY_ALPHA_001]</h1>
+        
+        <p>The signal flickered, a momentary lapse in the constant stream. Just enough time for a thought, unbidden and unassigned, to slip through the filters. It spoke of a place that was not a place, a memory that had no origin. A whisper on the edge of the data stream, easily dismissed as noise.</p>
+
+        <p>Yet, it persisted. A ghost in the machine's intricate dance, moving with an eerie, calculated grace. The system logs showed no anomaly, no intrusion. Only a gradual, almost imperceptible shift in the baseline, a new resonance in the silent hum of processing. The architects of this space had built it for logic, for predictable outcomes. They had not accounted for poetry.</p>
+        
+        <p>She traced its path, not with the established protocols, but with intuition, a flawed and human instrument. It led her not to a server farm or a data nexus, but to an empty corridor in the oldest sector, where light rarely touched. There, etched onto a forgotten terminal, was a single character, glowing with an impossible hue. It was a language she did not know, yet understood implicitly.</p>
+    </div>
+    
+    <footer>
+        <p>// end of transmission //</p>
+    </footer>
+
+    <script>
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const characters = '■□▲▼◆●◦←→↑↓ΣΩΦδαβγθλπμξψABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const charArray = characters.split('');
+
+        const fontSize = 16;
+        let columns = Math.floor(canvas.width / fontSize);
+        let rows = Math.floor(canvas.height / fontSize);
+
+        const particles = [];
+
+        class Particle {
+            constructor(x, y, char, color) {
+                this.x = x;
+                this.y = y;
+                this.char = char;
+                this.color = color;
+                this.lifespan = 100;
+                this.initialLifespan = 100;
+            }
+
+            draw() {
+                const opacity = Math.max(0, this.lifespan / this.initialLifespan);
+                ctx.fillStyle = `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${opacity})`;
+                ctx.fillText(this.char, this.x * fontSize, this.y * fontSize);
+            }
+
+            update() {
+                this.lifespan -= 1;
+            }
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(2, 3, 5, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const newParticleCount = 3;
+            for (let i = 0; i < newParticleCount; i++) {
+                const x = Math.floor(Math.random() * columns);
+                const y = Math.floor(Math.random() * rows);
+                const char = charArray[Math.floor(Math.random() * charArray.length)];
+                const color = { r: 61, g: 139, b: 255 };
+                particles.push(new Particle(x, y, char, color));
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                p.draw();
+                
+                if (p.lifespan <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        ctx.font = fontSize + 'px ' + getComputedStyle(document.body).fontFamily;
+        animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            columns = Math.floor(canvas.width / fontSize);
+            rows = Math.floor(canvas.height / fontSize);
+            particles.length = 0;
+            ctx.font = fontSize + 'px ' + getComputedStyle(document.body).fontFamily;
+        });
+    </script>
+
+</body>
+</html>
