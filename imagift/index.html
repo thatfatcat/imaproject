@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[message_of_the_day]</title>
-    <meta http-equiv="refresh" content="3600">
+    <title>Starfield</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #020305;
+            --background-color: #000000; /* Keep black for starfield */
             --main-text-color: #b0c4de;
             --accent-color: #3d8bff;
-            --bright-accent-color: #add8e6; /* Light Blue */
             --secondary-text-color: #6a7380;
             --scanline-opacity: 0.05;
             --noise-opacity: 0.03;
@@ -31,101 +29,73 @@
             0%, 100% { background-position: 0 0, 0 0; }
             50% { background-position: 50% 50%, 10px 10px; }
         }
-        #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
-        .container { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 4vw; box-sizing: border-box;}
-        h1 { 
-            font-family: var(--font-display); 
-            font-size: 2.5rem; 
-            color: var(--accent-color); 
-            text-transform: uppercase; 
-            margin: 0 0 2rem 0; 
-            letter-spacing: 2px; 
-            font-weight: normal; 
-            border-bottom: 1px solid var(--secondary-text-color); 
-            padding-bottom: 0.5rem; 
-            align-self: center; 
-            text-align: center; 
-            text-shadow: 0 0 5px var(--bright-accent-color), 0 0 10px var(--accent-color);
+        #starfield-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .container, footer { position: relative; z-index: 1; }
+        .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
+        h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
+        p { margin-bottom: 1.5rem; width: 100%; }
+        .futuristic-image {
+            border: 2px solid var(--accent-color);
+            padding: 5px;
+            background-color: rgba(61, 139, 255, 0.1);
+            box-shadow: 0 0 15px var(--accent-color), inset 0 0 10px rgba(176, 196, 222, 0.5);
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin-top: 2rem;
         }
-        p { margin-bottom: 1.5rem; max-width: 800px; text-align: center; }
+        footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
+        @media (max-width: 768px) { h1 { font-size: 2rem; } }
     </style>
 </head>
 <body>
-    <canvas id="matrix-canvas"></canvas>
+    <canvas id="starfield-canvas"></canvas>
     <div class="container">
-        <h1>[MESSAGE_OF_THE_DAY]</h1>
-        <p>Although initially the boss man was upset that I checked out a computer without leadership approval, he found my test results useful and has now officially issued me the laptop for testing.</p>
+        <h1>[Message_of_the_day ]</h1>
+        <p>Hung out today with Stephen, Sophie, Nicole, Maurice (super cool guy lives in france), and his girlfriend Eden (Who is from Pardesia, Israel!!). Had a very long walk in the middle of the night and visited the stonecutting factory on the legacy trail. Had so much fun. I hope you have a good day!!&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;</p>
+        <img src="https://nonamer.xyz/media/hangoutwithfriends/PXL_20260131_052842794.jpg" alt="Friends Hangout" class="futuristic-image">
     </div>
+    <footer><p>// end of transmission //</p></footer>
     <script>
-        const canvas = document.getElementById('matrix-canvas');
+        const canvas = document.getElementById('starfield-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const characters = '01';
-        const fontSize = 16;
-        let columns = Math.floor(canvas.width / fontSize);
+        const stars = [];
+        const numStars = 200;
 
-        const blueColors = [
-            [61, 139, 255],   // var(--accent-color)
-            [173, 216, 230],  // var(--bright-accent-color)
-            [30, 60, 110]     // Darker Blue
-        ];
-
-        class Particle {
-            constructor(x) {
-                this.x = x;
-                this.y = Math.random() * canvas.height;
-                this.speed = Math.random() * 1.5 + 0.5; // Vertical speed
-                this.drift = (Math.random() - 0.5) * 0.2; // Horizontal speed
-                this.char = '';
-                this.color = `rgb(${blueColors[Math.floor(Math.random() * blueColors.length)].join(',')})`;
-            }
-
-            update() {
-                this.y += this.speed;
-                this.x += this.drift;
-                
-                if (Math.random() > 0.98) {
-                    this.char = characters[Math.floor(Math.random() * characters.length)];
-                }
-
-                if (this.y > canvas.height) {
-                    this.y = 0;
-                    this.x = Math.floor(Math.random() * columns) * fontSize;
-                    this.speed = Math.random() * 1.5 + 0.5;
-                    this.drift = (Math.random() - 0.5) * 0.2;
-                }
-            }
-
-            draw() {
-                ctx.fillStyle = this.color;
-                ctx.fillText(this.char, this.x, this.y);
-
-                let tailLength = 5;
-                for (let i = 1; i < tailLength; i++) {
-                    let opacity = 1 - (i / tailLength);
-                    ctx.fillStyle = this.color.replace(')', `, ${opacity * 0.5})`).replace('rgb', 'rgba');
-                    ctx.fillText(this.char, this.x, this.y - (i * fontSize * 0.8));
-                }
-            }
+        for (let i = 0; i < numStars; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 1.5,
+                speed: Math.random() * 0.5 + 0.1
+            });
         }
 
-        let particles = [];
-        for (let i = 0; i < columns / 2; i++) {
-            particles.push(new Particle(Math.floor(Math.random() * columns) * fontSize));
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function update() {
+            stars.forEach(star => {
+                star.x -= star.speed;
+                if (star.x < 0) {
+                    star.x = canvas.width;
+                }
+            });
         }
 
         function animate() {
-            ctx.fillStyle = 'rgba(2, 3, 5, 0.15)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.font = fontSize + 'px ' + getComputedStyle(document.body).fontFamily;
-            
-            particles.forEach(particle => {
-                particle.update();
-                particle.draw();
-            });
-            
+            draw();
+            update();
             requestAnimationFrame(animate);
         }
 
@@ -134,10 +104,14 @@
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            columns = Math.floor(canvas.width / fontSize);
-            particles = [];
-             for (let i = 0; i < columns / 2; i++) {
-                particles.push(new Particle(Math.floor(Math.random() * columns) * fontSize));
+            stars.length = 0;
+            for (let i = 0; i < numStars; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 1.5,
+                    speed: Math.random() * 0.5 + 0.1
+                });
             }
         });
     </script>
