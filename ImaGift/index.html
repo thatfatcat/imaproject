@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=800, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thorfinn</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
@@ -18,9 +18,9 @@
         }
         body, html {
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
-            color: var(--main-text-color); font-family: var(--font-primary); font-size: 14px; /* Adjusted for smaller screen */
-            line-height: 1.6; overflow: hidden;
-            background-image:
+            color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
+            line-height: 1.7; overflow: hidden;
+            background-image: 
                 radial-gradient(ellipse at center, rgba(176, 196, 222, 0.03), transparent 80%),
                 repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, var(--scanline-opacity)) 1px, rgba(255, 255, 255, var(--scanline-opacity)) 2px);
             animation: noise 1s steps(2) infinite;
@@ -29,164 +29,85 @@
             0%, 100% { background-position: 0 0, 0 0; }
             50% { background-position: 50% 50%, 10px 10px; }
         }
-        #fireworks-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
-        .container { max-width: 780px; margin: 0 auto; padding: 2vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
-        .content-wrapper { display: flex; align-items: flex-start; width: 100%; gap: 20px; }
-        .text-content { flex: 1; }
-        .image-content { flex: 1; display: flex; justify-content: center; align-items: center; }
-        h1 { font-family: var(--font-display); font-size: 2rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 1rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
-        p { margin-bottom: 1rem; width: 100%; }
-        .styled-image {
-            border: 2px solid var(--accent-color);
-            box-shadow: 0 0 10px var(--accent-color);
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin: 0;
-        }
-        footer { text-align: center; padding: 1rem 0; font-size: 0.8rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
-        @media (max-width: 800px) {
-            h1 { font-size: 1.8rem; }
-            body, html { font-size: 12px; }
-            .content-wrapper { flex-direction: column; }
-        }
+        .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
+        h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
+        p { margin-bottom: 1.5rem; width: 100%; }
+        footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
+        @media (max-width: 768px) { h1 { font-size: 2rem; } }
     </style>
 </head>
 <body>
-    <canvas id="fireworks-canvas"></canvas>
+    <canvas id="matrix-canvas"></canvas>
     <div class="container">
         <h1>[MESSAGE_OF_THE_DAY]</h1>
-        <div class="content-wrapper">
-            <div class="text-content">
-                <p>Got my geeksquad badge today. Brought Thorfinn to Best Buy to do a small badge celebration.</p>
-            </div>
-            <div class="image-content">
-                <img src="https://nonamer.xyz/media/PXL_20260131_202004307.jpg" alt="A meaningful moment" class="styled-image">
-            </div>
-        </div>
+        <p>Today I saw Jane for the last time. It was hard, but I learned a lot from the time with her, and am excited to grow comfortable with being by myself. I have never been able to be alone and its time I develop that skill.</p>
     </div>
     <footer><p>// end of transmission //</p></footer>
     <script>
-        const canvas = document.getElementById('fireworks-canvas');
+        const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const fireworks = [];
-        const particles = [];
-        const colors = ['#ffc700', '#ff004d', '#00ff73', '#00e1ff', '#9d00ff'];
-
-        function random(min, max) {
-            return Math.random() * (max - min) + min;
-        }
-
-        class Firework {
-            constructor() {
-                this.x = random(canvas.width * 0.2, canvas.width * 0.8);
-                this.y = canvas.height;
-                this.targetY = random(canvas.height * 0.2, canvas.height * 0.5);
-                this.speed = random(2, 4);
-                this.angle = -Math.PI / 2;
-                this.trail = [];
-                this.color = colors[Math.floor(random(0, colors.length))];
-            }
-
-            update() {
-                this.y -= this.speed;
-                this.trail.push({ x: this.x, y: this.y, alpha: 1 });
-                for (let i = this.trail.length - 1; i >= 0; i--) {
-                    this.trail[i].alpha -= 0.1;
-                    if (this.trail[i].alpha <= 0) {
-                        this.trail.splice(i, 1);
-                    }
-                }
-                if (this.y <= this.targetY) {
-                    this.explode();
-                    return true; // Firework is done
-                }
-                return false;
-            }
-
-            draw() {
-                ctx.beginPath();
-                ctx.moveTo(this.trail[this.trail.length - 1]?.x || this.x, this.trail[this.trail.length - 1]?.y || this.y);
-                ctx.lineTo(this.x, this.y);
-                ctx.strokeStyle = this.color;
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                this.trail.forEach(p => {
-                    ctx.fillStyle = `rgba(${this.color.match(/\w\w/g).map(hex => parseInt(hex, 16)).join(',')}, ${p.alpha})`;
-                    ctx.fillRect(p.x, p.y, 2, 2);
-                });
-            }
-
-            explode() {
-                const particleCount = 100;
-                for (let i = 0; i < particleCount; i++) {
-                    particles.push(new Particle(this.x, this.y, this.color));
-                }
-            }
-        }
-
-        class Particle {
-            constructor(x, y, color) {
+        const characters = '■□▲▼◆●◦←→↑↓ΣΩΦδαβγθλπμξψABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const fontSize = 12;
+        
+        class Ripple {
+            constructor(x, y) {
                 this.x = x;
                 this.y = y;
-                this.color = color;
-                this.angle = random(0, Math.PI * 2);
-                this.speed = random(1, 5);
-                this.friction = 0.95;
-                this.gravity = 0.1;
-                this.alpha = 1;
-                this.decay = random(0.01, 0.03);
-                this.velX = Math.cos(this.angle) * this.speed;
-                this.velY = Math.sin(this.angle) * this.speed;
+                this.radius = 0;
+                this.lifespan = 150;
+                this.initialLifespan = 150;
+                this.speed = 1.5;
             }
 
             update() {
-                this.velX *= this.friction;
-                this.velY *= this.friction;
-                this.velY += this.gravity;
-                this.x += this.velX;
-                this.y += this.velY;
-                this.alpha -= this.decay;
-                return this.alpha <= this.decay;
+                this.radius += this.speed;
+                this.lifespan--;
             }
 
             draw() {
-                ctx.save();
-                ctx.globalCompositeOperation = 'lighter';
-                ctx.beginPath();
-                ctx.fillStyle = `rgba(${this.color.match(/\w\w/g).map(hex => parseInt(hex, 16)).join(',')}, ${this.alpha})`;
-                ctx.arc(this.x, this.y, 1.5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
+                const opacity = Math.max(0, this.lifespan / this.initialLifespan) * 0.4;
+                ctx.strokeStyle = `rgba(61, 139, 255, ${opacity})`;
+                ctx.font = fontSize + 'px ' + getComputedStyle(document.body).fontFamily;
+                
+                const circumference = 2 * Math.PI * this.radius;
+                const charCount = Math.floor(circumference / (fontSize * 0.8));
+                
+                for (let i = 0; i < charCount; i++) {
+                    const angle = (i / charCount) * 2 * Math.PI;
+                    const charX = this.x + this.radius * Math.cos(angle);
+                    const charY = this.y + this.radius * Math.sin(angle);
+                    const char = characters[Math.floor(Math.random() * characters.length)];
+                    ctx.save();
+                    ctx.translate(charX, charY);
+                    ctx.rotate(angle + Math.PI / 2);
+                    ctx.fillStyle = `rgba(61, 139, 255, ${opacity})`;
+                    ctx.fillText(char, 0, 0);
+                    ctx.restore();
+                }
             }
         }
+
+        const ripples = [];
 
         function animate() {
             ctx.fillStyle = 'rgba(2, 3, 5, 0.15)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            if (random(0, 1) < 0.03) {
-                fireworks.push(new Firework());
+            if (Math.random() > 0.98) {
+                ripples.push(new Ripple(Math.random() * canvas.width, Math.random() * canvas.height));
             }
-
-            for (let i = fireworks.length - 1; i >= 0; i--) {
-                if (fireworks[i].update()) {
-                    fireworks.splice(i, 1);
-                } else {
-                    fireworks[i].draw();
-                }
-            }
-
-            for (let i = particles.length - 1; i >= 0; i--) {
-                if (particles[i].update()) {
-                    particles.splice(i, 1);
-                } else {
-                    particles[i].draw();
+            
+            for (let i = ripples.length - 1; i >= 0; i--) {
+                const r = ripples[i];
+                r.update();
+                r.draw();
+                if (r.lifespan <= 0) {
+                    ripples.splice(i, 1);
                 }
             }
 
@@ -198,8 +119,7 @@
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            fireworks.length = 0;
-            particles.length = 0;
+            ripples.length = 0;
         });
     </script>
 </body>
