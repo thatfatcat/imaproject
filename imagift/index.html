@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="3600">
-    <title>Tunnel Vision</title>
+    <title>Sophie's Museum</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -20,7 +19,7 @@
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             overflow-y: auto;
         }
-        #ascii-canvas {
+        #ascii-particle-canvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -50,39 +49,23 @@
             text-transform: uppercase;
             letter-spacing: 2px;
             font-weight: normal;
+            margin-bottom: 2rem;
         }
-        p {
-            margin-bottom: 1.5rem;
+        .video-wrapper {
+            position: relative;
             width: 100%;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            margin-bottom: 2rem;
         }
-        .shake-text {
-            display: inline-block;
-            animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both infinite;
-            transform: translate3d(0, 0, 0);
-            backface-visibility: hidden;
-            perspective: 1000px;
-        }
-
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
-        }
-
-        .shake-less {
-            display: inline-block;
-            animation: shake-less 0.82s cubic-bezier(.36,.07,.19,.97) both infinite;
-            transform: translate3d(0, 0, 0);
-            backface-visibility: hidden;
-            perspective: 1000px;
-        }
-
-        @keyframes shake-less {
-            10%, 90% { transform: translate3d(-0.5px, 0, 0); }
-            20%, 80% { transform: translate3d(1px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-2px, 0, 0); }
-            40%, 60% { transform: translate3d(2px, 0, 0); }
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 2px solid var(--accent-color);
+            box-shadow: 0 0 15px var(--accent-color);
         }
         footer {
             text-align: center;
@@ -95,76 +78,67 @@
     </style>
 </head>
 <body>
-    <canvas id="ascii-canvas"></canvas>
+    <canvas id="ascii-particle-canvas"></canvas>
     <div class="container">
-        <h1>[Message_Of_The_Day]</h1>
-      <p>Jane left me a poem she wrote during her last stay here. I couldn't get myself to read it until today, but now I decided to put it up on my website. You can read it at <span style="color:var(--accent-color)">nonamer.xyz/tunnelvision</span>. It really broke my heart.</p>
-      
+        <h1>Sophie's Museum</h1>
+        <div class="video-wrapper">
+            <iframe
+                src="https://www.youtube.com/embed/IX_PGdxGcjg"
+                title="YouTube video player"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen>
+            </iframe>
+        </div>
     </div>
-    <footer><p>// end of transmission //</p></footer>
+    <footer><p>// exhibit closed //</p></footer>
 
     <script>
-        const canvas = document.getElementById('ascii-canvas');
+        const canvas = document.getElementById('ascii-particle-canvas');
         const ctx = canvas.getContext('2d');
-
-        let stars = [];
-        const chars = ['*', '.', '+', '`'];
-        const fontSize = 12;
+        let particles = [];
+        const chars = ['*', '.', "'", '`', '+', ':', 'o'];
 
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            stars = [];
-            const starCount = (canvas.width * canvas.height) / 800; // Adjust density based on screen size
-            for (let i = 0; i < starCount; i++) {
-                stars.push(new Star());
+            particles = [];
+            const particleCount = (canvas.width * canvas.height) / 5000; // Increased density
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
             }
         }
 
-        class Star {
+        class Particle {
             constructor() {
                 this.x = Math.random() * canvas.width;
                 this.y = Math.random() * canvas.height;
                 this.char = chars[Math.floor(Math.random() * chars.length)];
-                this.alpha = Math.random();
-                this.fadeSpeed = Math.random() * 0.02 + 0.005;
-                this.fadingIn = true;
+                this.speedY = Math.random() * 0.5 + 0.1;
+                this.alpha = Math.random() * 0.7 + 0.1;
+                this.fontSize = Math.random() * 8 + 8; // Smaller particles
             }
 
             update() {
-                if (this.fadingIn) {
-                    this.alpha += this.fadeSpeed;
-                    if (this.alpha >= 1) {
-                        this.alpha = 1;
-                        this.fadingIn = false;
-                    }
-                } else {
-                    this.alpha -= this.fadeSpeed;
-                    if (this.alpha <= 0) {
-                        this.reset();
-                    }
+                this.y -= this.speedY;
+                if (this.y < -this.fontSize) {
+                    this.y = canvas.height + this.fontSize;
+                    this.x = Math.random() * canvas.width;
                 }
-            }
-
-            reset() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.alpha = 0;
-                this.fadingIn = true;
             }
 
             draw() {
                 ctx.fillStyle = `rgba(176, 196, 222, ${this.alpha})`;
-                ctx.font = `${fontSize}px ${getComputedStyle(document.body).fontFamily}`;
+                ctx.font = `${this.fontSize}px ${getComputedStyle(document.body).fontFamily}`;
                 ctx.fillText(this.char, this.x, this.y);
             }
         }
 
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            stars.forEach(star => {
-                star.update();
-                star.draw();
+            particles.forEach(p => {
+                p.update();
+                p.draw();
             });
             requestAnimationFrame(animate);
         }
