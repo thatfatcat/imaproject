@@ -3,155 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="3600">
-    <title>newdesk</title>
+    <title>The Internet Highway</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #000000;
+            --background-color: #020305;
             --main-text-color: #b0c4de;
-            --accent-color: #ff8c00; /* A warmer accent color for the embers theme */
+            --accent-color: #3d8bff;
             --secondary-text-color: #6a7380;
+            --scanline-opacity: 0.05;
+            --noise-opacity: 0.03;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
         body, html {
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
-            overflow-y: auto;
+            line-height: 1.7; overflow: hidden;
+            background-image:
+                radial-gradient(ellipse at center, rgba(176, 196, 222, 0.03), transparent 80%),
+                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, var(--scanline-opacity)) 1px, rgba(255, 255, 255, var(--scanline-opacity)) 2px);
+            animation: noise 1s steps(2) infinite;
         }
-        #ember-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
+        @keyframes noise {
+            0%, 100% { background-position: 0 0, 0 0; }
+            50% { background-position: 50% 50%, 10px 10px; }
         }
-        .container, footer {
-            position: relative;
-            z-index: 1;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 4vw;
-            min-height: 90vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-        h1 {
-            font-family: var(--font-display);
-            font-size: 3rem;
-            color: var(--accent-color);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: normal;
-            margin-bottom: 1.5rem;
-        }
-        p {
-            margin-bottom: 1.5rem;
-            width: 100%;
-            max-width: 600px;
-        }
-        .styled-image {
-            max-width: 100%;
-            height: auto;
-            border: 2px solid var(--accent-color);
-            padding: 5px;
-            background-color: rgba(255, 140, 0, 0.05);
-            box-shadow: 0 0 15px var(--accent-color);
-            margin-top: 2rem;
-        }
-        footer {
-            text-align: center;
-            padding: 2rem 0;
-            font-size: 0.9rem;
-            color: var(--secondary-text-color);
-            margin-top: auto;
-            width: 100%;
-        }
+        #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .container, footer { position: relative; z-index: 1; }
+        .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
+        h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
+        p { margin-bottom: 1.5rem; width: 100%; }
+        footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
+        @media (max-width: 768px) { h1 { font-size: 2rem; } }
     </style>
 </head>
 <body>
-    <canvas id="ember-canvas"></canvas>
+    <canvas id="matrix-canvas"></canvas>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <p>Got a new office. still shared with the same guy (Guy) but with a lot more privacy. Got my puppy rats and geeksquad badge on there</p>
-        <img src="http://nonamer.xyz/media/mydesk.jpg" alt="My office" class="styled-image">
+        <p>It has been a difficult week for me. My mental health has not been great and it has greatly impacted my work. Tomorrow I'm going out to a movie with friends, and Dimitri is coming down for the weekend too. Thorfinn has been a huge highlight as well, he makes me feel so loved. It's just the season. Things will be okay. I love you.</p>
     </div>
-    <footer></footer>
-
+    <footer><p></p></footer>
     <script>
-        const canvas = document.getElementById('ember-canvas');
+        const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
-        let particles = [];
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            particles = [];
-            const particleCount = 100;
-            for (let i = 0; i < particleCount; i++) {
-                particles.push(new Particle());
-            }
-        }
+        const characters = '■□▲▼◆●◦←→↑↓ΣΩΦδαβγθλπμξψABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const fontSize = 14;
+        const rows = Math.floor(canvas.height / fontSize);
 
-        class Particle {
+        class Racer {
             constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 3 + 1;
-                this.speedX = (Math.random() * 0.4 - 0.2);
-                this.speedY = (Math.random() * 0.4 - 0.2);
-                this.alpha = Math.random() * 0.5 + 0.2;
-                this.life = Math.random() * 300 + 100;
-                this.initialLife = this.life;
+                this.y = Math.floor(Math.random() * rows);
+                this.speed = Math.random() * 2 + 1;
+                this.length = Math.floor(Math.random() * 10) + 5;
+                this.chars = this.generateChars();
+                this.direction = Math.random() > 0.5 ? 1 : -1;
+                this.x = this.direction === 1 ? -this.length * fontSize : canvas.width;
+            }
+
+            generateChars() {
+                let s = '';
+                for (let i = 0; i < this.length; i++) {
+                    s += characters[Math.floor(Math.random() * characters.length)];
+                }
+                return s;
             }
 
             update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-                this.life -= 1;
-
-                if (this.life <= 0) {
-                    this.reset();
+                this.x += this.speed * this.direction;
+                if ((this.direction === 1 && this.x > canvas.width) || (this.direction === -1 && this.x < -this.length * fontSize)) {
+                    // Reset
+                    this.y = Math.floor(Math.random() * rows);
+                    this.speed = Math.random() * 2 + 1;
+                    this.x = this.direction === 1 ? -this.length * fontSize : canvas.width;
+                    this.chars = this.generateChars();
                 }
-            }
-            
-            reset() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.life = Math.random() * 300 + 100;
-                this.initialLife = this.life;
             }
 
             draw() {
-                const fadeInOut = Math.sin((this.life / this.initialLife) * Math.PI);
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 140, 0, ${this.alpha * fadeInOut})`;
-                ctx.shadowColor = `rgba(255, 140, 0, 1)`;
-                ctx.shadowBlur = 10;
-                ctx.fill();
+                ctx.fillStyle = 'rgba(61, 139, 255, 0.2)';
+                ctx.font = fontSize + 'px ' + getComputedStyle(document.body).fontFamily;
+                ctx.fillText(this.chars, this.x, this.y * fontSize);
             }
         }
 
+        const racers = Array.from({ length: 40 }, () => new Racer());
+
         function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => {
-                p.update();
-                p.draw();
+            ctx.fillStyle = 'rgba(2, 3, 5, 0.15)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            racers.forEach(racer => {
+                racer.update();
+                racer.draw();
             });
+
             requestAnimationFrame(animate);
         }
-
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        
         animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            // No need to re-init, they will reset themselves
+        });
     </script>
 </body>
 </html>
