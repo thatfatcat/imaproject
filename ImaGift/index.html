@@ -4,115 +4,127 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>The Internet Highway</title>
+    <title>Animation 7</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #020305;
-            --main-text-color: #b0c4de;
-            --accent-color: #3d8bff;
+            --background-color: #000000;
+            --main-text-color: #c0c0c0;
+            --accent-color: #4a90e2; /* A cool blue accent color */
             --secondary-text-color: #6a7380;
-            --scanline-opacity: 0.05;
-            --noise-opacity: 0.03;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
         body, html {
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
-            line-height: 1.7; overflow: hidden;
-            background-image:
-                radial-gradient(ellipse at center, rgba(176, 196, 222, 0.03), transparent 80%),
-                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, var(--scanline-opacity)) 1px, rgba(255, 255, 255, var(--scanline-opacity)) 2px);
-            animation: noise 1s steps(2) infinite;
+            overflow: hidden; /* Hide scrollbars as content is centered */
         }
-        @keyframes noise {
-            0%, 100% { background-position: 0 0, 0 0; }
-            50% { background-position: 50% 50%, 10px 10px; }
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
         }
-        #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
-        .container, footer { position: relative; z-index: 1; }
-        .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
-        h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
-        p { margin-bottom: 1.5rem; width: 100%; }
-        footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
-        @media (max-width: 768px) { h1 { font-size: 2rem; } }
+        .container, footer {
+            position: relative;
+            z-index: 1;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4vw;
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        h1 {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: normal;
+            margin-bottom: 1.5rem;
+        }
+        p {
+            margin-bottom: 1.5rem;
+            width: 100%;
+            max-width: 600px;
+        }
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            font-size: 0.9rem;
+            color: var(--secondary-text-color);
+            margin-top: auto;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
     <canvas id="matrix-canvas"></canvas>
     <div class="container">
-        <h1>[Message_of_the_day]</h1>
-        <p>It has been a difficult week for me. My mental health has not been great and it has greatly impacted my work. Tomorrow I'm going out to a movie with friends, and Dimitri is coming down for the weekend too. Thorfinn has been a huge highlight as well, he makes me feel so loved. It's just the season. Things will be okay. I love you.</p>
+        <h1>[Message_OF_The_day]&nbsp;</h1>
+      <p>You have yet to give me your theory about aliens! So for now I'll give you mine: For us to find aliens they would have to be intelligent enough to communicate with one another through use of light like we do. However, I think intelligence is just not a very important skill in evolution. Throughout the history of living things on this planet, every animal thats been on top of the food chain was there because it was big and strong, and rarely due to its intelligence. We are just a fluke.&nbsp;</p>
+        <p>Now please share your theory :)&nbsp;</p>
     </div>
-    <footer><p></p></footer>
+    <footer><p>// data flows, ideas emerge //</p></footer>
+
     <script>
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
 
-        const characters = '■□▲▼◆●◦←→↑↓ΣΩΦδαβγθλπμξψABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        const fontSize = 14;
-        const rows = Math.floor(canvas.height / fontSize);
+        let fontSize = 16;
+        let columns;
+        let drops = [];
 
-        class Racer {
-            constructor() {
-                this.y = Math.floor(Math.random() * rows);
-                this.speed = Math.random() * 2 + 1;
-                this.length = Math.floor(Math.random() * 10) + 5;
-                this.chars = this.generateChars();
-                this.direction = Math.random() > 0.5 ? 1 : -1;
-                this.x = this.direction === 1 ? -this.length * fontSize : canvas.width;
-            }
+        // Characters to be used in the animation
+        const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()_+-=[]{}|;:",.<>?/`~';
 
-            generateChars() {
-                let s = '';
-                for (let i = 0; i < this.length; i++) {
-                    s += characters[Math.floor(Math.random() * characters.length)];
-                }
-                return s;
-            }
-
-            update() {
-                this.x += this.speed * this.direction;
-                if ((this.direction === 1 && this.x > canvas.width) || (this.direction === -1 && this.x < -this.length * fontSize)) {
-                    // Reset
-                    this.y = Math.floor(Math.random() * rows);
-                    this.speed = Math.random() * 2 + 1;
-                    this.x = this.direction === 1 ? -this.length * fontSize : canvas.width;
-                    this.chars = this.generateChars();
-                }
-            }
-
-            draw() {
-                ctx.fillStyle = 'rgba(61, 139, 255, 0.2)';
-                ctx.font = fontSize + 'px ' + getComputedStyle(document.body).fontFamily;
-                ctx.fillText(this.chars, this.x, this.y * fontSize);
-            }
-        }
-
-        const racers = Array.from({ length: 40 }, () => new Racer());
-
-        function animate() {
-            ctx.fillStyle = 'rgba(2, 3, 5, 0.15)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            racers.forEach(racer => {
-                racer.update();
-                racer.draw();
-            });
-
-            requestAnimationFrame(animate);
-        }
-        
-        animate();
-
-        window.addEventListener('resize', () => {
+        function initializeMatrix() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            // No need to re-init, they will reset themselves
-        });
+            columns = Math.floor(canvas.width / fontSize);
+            drops = [];
+            for (let i = 0; i < columns; i++) {
+                drops[i] = 1;
+            }
+        }
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#4a90e2'; // Accent color for the text
+            ctx.font = fontSize + 'px ' + getComputedStyle(document.body).getPropertyValue('--font-primary');
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = characters.charAt(Math.floor(Math.random() * characters.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]+=0.5;
+            }
+        }
+
+        function animate() {
+            drawMatrix();
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', initializeMatrix);
+        initializeMatrix();
+        // Use a slight delay to ensure fonts are loaded
+        setTimeout(animate, 100);
+
     </script>
 </body>
 </html>
