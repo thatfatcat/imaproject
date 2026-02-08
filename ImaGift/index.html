@@ -4,23 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Animation 7</title>
+    <title>Animation 8</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
             --background-color: #000000;
-            --main-text-color: #c0c0c0;
-            --accent-color: #4a90e2; /* A cool blue accent color */
-            --secondary-text-color: #6a7380;
+            --main-text-color: #e0e0e0; /* Brighter text for contrast against the stars */
+            --accent-color: #ffffff; /* White accent for a clean, stellar look */
+            --secondary-text-color: #888888;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
         body, html {
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
-            overflow: hidden; /* Hide scrollbars as content is centered */
+            overflow: hidden;
         }
-        #matrix-canvas {
+        #starfield-canvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -51,6 +51,7 @@
             letter-spacing: 2px;
             font-weight: normal;
             margin-bottom: 1.5rem;
+            text-shadow: 0 0 10px var(--accent-color);
         }
         p {
             margin-bottom: 1.5rem;
@@ -68,63 +69,77 @@
     </style>
 </head>
 <body>
-    <canvas id="matrix-canvas"></canvas>
+    <canvas id="starfield-canvas"></canvas>
     <div class="container">
-        <h1>[Message_OF_The_day]&nbsp;</h1>
-      <p>You have yet to give me your theory about aliens! So for now I'll give you mine: For us to find aliens they would have to be intelligent enough to communicate with one another through use of light like we do. However, I think intelligence is just not a very important skill in evolution. Throughout the history of living things on this planet, every animal thats been on top of the food chain was there because it was big and strong, and rarely due to its intelligence. We are just a fluke.&nbsp;</p>
-        <p>Now please share your theory :)&nbsp;</p>
+        <h1>[Im calling you when i wake up]</h1>
+        <p>You both better have interesting fermi paradox theories by when im awake.</p>
     </div>
-    <footer><p>// data flows, ideas emerge //</p></footer>
+    <footer><p>// adrift in the cosmos //</p></footer>
 
     <script>
-        const canvas = document.getElementById('matrix-canvas');
+        const canvas = document.getElementById('starfield-canvas');
         const ctx = canvas.getContext('2d');
 
-        let fontSize = 16;
-        let columns;
-        let drops = [];
+        let stars = [];
+        const numStars = 800;
+        const speed = 2;
 
-        // Characters to be used in the animation
-        const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()_+-=[]{}|;:",.<>?/`~';
-
-        function initializeMatrix() {
+        function initializeStarfield() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            columns = Math.floor(canvas.width / fontSize);
-            drops = [];
-            for (let i = 0; i < columns; i++) {
-                drops[i] = 1;
+            stars = [];
+            for (let i = 0; i < numStars; i++) {
+                stars.push(createStar());
             }
         }
 
-        function drawMatrix() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+        function createStar() {
+            return {
+                x: (Math.random() - 0.5) * canvas.width,
+                y: (Math.random() - 0.5) * canvas.height,
+                z: Math.random() * canvas.width,
+            };
+        }
+
+        function drawStarfield() {
+            ctx.fillStyle = 'black';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.fillStyle = '#4a90e2'; // Accent color for the text
-            ctx.font = fontSize + 'px ' + getComputedStyle(document.body).getPropertyValue('--font-primary');
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
 
-            for (let i = 0; i < drops.length; i++) {
-                const text = characters.charAt(Math.floor(Math.random() * characters.length));
-                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+            for (let i = 0; i < numStars; i++) {
+                let star = stars[i];
+                star.z -= speed;
 
-                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                    drops[i] = 0;
+                if (star.z <= 0) {
+                    stars[i] = createStar();
+                    stars[i].z = canvas.width;
                 }
-                drops[i]+=0.5;
+
+                const k = 128 / star.z;
+                const px = star.x * k;
+                const py = star.y * k;
+
+                const size = (1 - star.z / canvas.width) * 5;
+                const shade = parseInt((1 - star.z / canvas.width) * 255);
+                ctx.fillStyle = `rgb(${shade},${shade},${shade})`;
+                ctx.beginPath();
+                ctx.arc(px, py, size / 2, 0, Math.PI * 2);
+                ctx.fill();
             }
+
+            ctx.restore();
         }
 
         function animate() {
-            drawMatrix();
+            drawStarfield();
             requestAnimationFrame(animate);
         }
 
-        window.addEventListener('resize', initializeMatrix);
-        initializeMatrix();
-        // Use a slight delay to ensure fonts are loaded
-        setTimeout(animate, 100);
-
+        window.addEventListener('resize', initializeStarfield);
+        initializeStarfield();
+        animate();
     </script>
 </body>
 </html>
