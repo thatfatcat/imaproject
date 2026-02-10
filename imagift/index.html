@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>sumoerboul</title>
+    <title>Animation 12</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
             --background-color: #000000;
-            --main-text-color: #d0e0f0;
-            --accent-color: #4a90e2;
-            --secondary-text-color: #88aaff;
+            --main-text-color: #f0f0f0;
+            --accent-color: #00ff00; /* Bright green for the snake */
+            --secondary-text-color: #aaccaa;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
@@ -20,7 +20,7 @@
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             overflow: hidden;
         }
-        #bubble-canvas {
+        #snake-canvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -69,70 +69,101 @@
     </style>
 </head>
 <body>
-    <canvas id="bubble-canvas"></canvas>
+    <canvas id="snake-canvas"></canvas>
     <div class="container">
-        <h1>[Message_of_the_day]</h1>
-        <p>Watched the super bowl today. I have no clue whats going on but some friends are over and we're having a good time. I feel stressed about not doing stuff but I don't know what that stuff is. I wish I could just relax when I'm supposed to relax.</p>
-</div>
+        <h1>[Message_Of_The_day]</h1>
+        <p>A YouTuber named Markiplier (very similar to pewdiepie) released a passion project movie to cinemas this last week. I went to watch it expecting amateur garbage for kids but was pleasantly surprised. The movie, Iron Lung (based on an art game of the same name) is about a far future where suddenly the stars start dissapearing one by one, and nobody knows why. With only very little habitable places left in the universe the main character, a criminal worthy of the death penalty, is sent as a last ditch researcher to some of the last remaining moons in the universe. Bolted shut, his submarine serves as his prison cell, and he's lowered into the ocean on the moon. An ocean of blood. The YouTuber wrote the script, directed the movie, and played the only character we get to see on screen.&nbsp; &nbsp;It was the top movie this week in the box office by quite a bit, which pissed Hollywood off pretty bad, and the movie was quietly removed from the charts. The budget was only 3 million dollars and it made over 35 million this week. I give it 7/10 and i'm quite a harsh rater.</p>
+    </div>
     <footer><p>
 
     <script>
-        const canvas = document.getElementById('bubble-canvas');
+        const canvas = document.getElementById('snake-canvas');
         const ctx = canvas.getContext('2d');
 
-        let bubbles = [];
-        const numBubbles = 100;
-        const characters = '0123456789ABCDEF!@#$%^&*()_+-=[]{}|;:",.<>?/~'; // ASCII characters for bubbles
+        const gridSize = 20;
+        let snake;
+        let frameCount = 0;
 
-        function initializeBubbles() {
+        function initializeSnake() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            bubbles = [];
-            for (let i = 0; i < numBubbles; i++) {
-                bubbles.push(createBubble());
-            }
-        }
-
-        function createBubble() {
-            return {
-                x: Math.random() * canvas.width,
-                y: canvas.height + Math.random() * 200, // Start lower for a rising effect
-                fontSize: Math.random() * 15 + 10, // Font size for characters
-                speed: Math.random() * 2 + 0.5,
-                opacity: Math.random() * 0.7 + 0.3,
-                character: characters.charAt(Math.floor(Math.random() * characters.length))
+            snake = {
+                body: [{ x: 10, y: 10 }],
+                dx: 1,
+                dy: 0,
+                length: 5,
+                character: '#'
             };
         }
 
-        function drawBubbles() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // Fading trail effect
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            for (let i = 0; i < bubbles.length; i++) {
-                let bubble = bubbles[i];
-                bubble.y -= bubble.speed;
-
-                if (bubble.y < -bubble.fontSize) { // Reset when off-screen
-                    bubbles[i] = createBubble();
-                    bubbles[i].y = canvas.height + bubbles[i].fontSize;
-                }
-                
-                ctx.font = `${bubble.fontSize}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
-                ctx.fillStyle = `rgba(${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--accent-color').slice(1,3), 16)}, ${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--accent-color').slice(3,5), 16)}, ${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--accent-color').slice(5,7), 16)}, ${bubble.opacity})`; // Use accent color
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(bubble.character, bubble.x, bubble.y);
+            // Draw faint grid
+            ctx.strokeStyle = `rgba(${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--accent-color').slice(1,3), 16)}, ${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--accent-color').slice(3,5), 16)}, ${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--accent-color').slice(5,7), 16)}, 0.05)`; // Very faint accent color
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
             }
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            const head = snake.body[0];
+            let newHead = { x: head.x + snake.dx, y: head.y + snake.dy };
+
+            // Wall collision and wrapping
+            if (newHead.x * gridSize > canvas.width) newHead.x = 0;
+            if (newHead.x < 0) newHead.x = Math.floor(canvas.width / gridSize);
+            if (newHead.y * gridSize > canvas.height) newHead.y = 0;
+            if (newHead.y < 0) newHead.y = Math.floor(canvas.height / gridSize);
+
+            snake.body.unshift(newHead);
+
+            if (snake.body.length > snake.length) {
+                snake.body.pop();
+            }
+
+            // Change direction randomly
+            if (frameCount % 10 === 0 && Math.random() < 0.5) {
+                const directions = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+                const [newDx, newDy] = directions[Math.floor(Math.random() * directions.length)];
+                if (newDx !== -snake.dx && newDy !== -snake.dy) { // Prevent reversing
+                    snake.dx = newDx;
+                    snake.dy = newDy;
+                }
+            }
+
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
+            ctx.font = `${gridSize}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            snake.body.forEach(segment => {
+                ctx.fillText(snake.character, segment.x * gridSize, segment.y * gridSize);
+            });
         }
 
         function animate() {
-            drawBubbles();
-            requestAnimationFrame(animate);
+            frameCount++;
+            // Slow down the animation
+            setTimeout(() => {
+                draw();
+                requestAnimationFrame(animate);
+            }, 100);
         }
 
-        window.addEventListener('resize', initializeBubbles);
-        initializeBubbles();
+        window.addEventListener('resize', initializeSnake);
+        initializeSnake();
         animate();
     </script>
 </body>
 </html>
+
