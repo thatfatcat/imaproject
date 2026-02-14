@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Animation 15</title>
+    <title>Animation 17</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
             --background-color: #000000;
-            --main-text-color: #f0f0f0;
-            --accent-color: #ffffff; /* White for a classic constellation look */
-            --secondary-text-color: #cccccc;
+            --main-text-color: #ffcccc; /* Light pink */
+            --accent-color: #ff69b4; /* Hot pink */
+            --secondary-text-color: #ff99cc; /* Medium pink */
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
@@ -20,7 +20,7 @@
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             overflow: hidden;
         }
-        #constellation-canvas {
+        #wave-canvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -69,89 +69,60 @@
     </style>
 </head>
 <body>
-    <canvas id="constellation-canvas"></canvas>
+    <canvas id="wave-canvas"></canvas>
     <div class="container">
-        <h1>[Message_of_the_day]</h1>
-        <p>project of the day: I'm making an app that makes adding stuff to my budget sheet a lot easier and timestamps it.&nbsp;</p>
+        <h1>[Message_Of_The_day]</h1>
+        <p>Spending valentines day tomorrow with my friends. Trying to give myself some love for the holiday too. I hope you guys have a great day together! Do something nice&nbsp; &nbsp; &nbsp; &nbsp;</p>
     </div>
     <footer><p>
 
     <script>
-        const canvas = document.getElementById('constellation-canvas');
+        const canvas = document.getElementById('wave-canvas');
         const ctx = canvas.getContext('2d');
 
-        let particles = [];
-        const numParticles = 100;
-        const connectDistance = 150;
-        const particleChars = ['*', '+', 'o', 'O'];
-        const lineChar = '.';
+        let waves = [];
+        const numWaves = 7;
+        const waveChars = ['~', '-', '_', '=', '.', '/', '\\', '|', '+', '*', ':', ';', '`', '\'', '"', '^', '>', '<', '(', ')', '[', ']', '{', '}', '!', '?', '@', '#', '$', '%', '&'];
 
-        function initializeParticles() {
+        function initializeWaves() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            particles = [];
-            for (let i = 0; i < numParticles; i++) {
-                particles.push(createParticle());
+            waves = [];
+            for (let i = 0; i < numWaves; i++) {
+                waves.push(createWave(i));
             }
         }
 
-        function createParticle() {
+        function createWave(index) {
             return {
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                size: Math.random() * 10 + 10,
-                vx: Math.random() * 1 - 0.5,
-                vy: Math.random() * 1 - 0.5,
-                character: particleChars[Math.floor(Math.random() * particleChars.length)]
+                y: (canvas.height / numWaves) * index + (Math.random() * 50 - 25),
+                amplitude: Math.random() * 40 + 10,
+                frequency: Math.random() * 0.03 + 0.01,
+                speed: Math.random() * 0.03 + 0.01,
+                offset: Math.random() * 100,
+                character: waveChars[Math.floor(Math.random() * waveChars.length)],
+                fontSize: Math.random() * 10 + 10, // Vary font size
+                color: `hsla(${Math.random() * 60 + 300}, 100%, ${Math.random() * 50 + 50}%, ${Math.random() * 0.5 + 0.3})`
             };
         }
 
-        function drawAsciiLine(p1, p2, opacity) {
-            const dx = p2.x - p1.x;
-            const dy = p2.y - p1.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            const steps = distance / 10; // Draw a character every 10 pixels
-
-            ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-            ctx.font = `10px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
-
-            for (let i = 0; i < steps; i++) {
-                const x = p1.x + (dx / steps) * i;
-                const y = p1.y + (dy / steps) * i;
-                ctx.fillText(lineChar, x, y);
-            }
-        }
+        let time = 0;
 
         function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim();
+            waves.forEach(wave => {
+                ctx.fillStyle = wave.color;
+                ctx.font = `${wave.fontSize}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
 
-            for (let i = 0; i < particles.length; i++) {
-                const p1 = particles[i];
-                p1.x += p1.vx;
-                p1.y += p1.vy;
-
-                if (p1.x < 0 || p1.x > canvas.width) p1.vx *= -1;
-                if (p1.y < 0 || p1.y > canvas.height) p1.vy *= -1;
-
-                ctx.fillStyle = accentColor;
-                ctx.font = `${p1.size}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(p1.character, p1.x, p1.y);
-
-                for (let j = i + 1; j < particles.length; j++) {
-                    const p2 = particles[j];
-                    const dx = p1.x - p2.x;
-                    const dy = p1.y - p2.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-
-                    if (distance < connectDistance) {
-                        drawAsciiLine(p1, p2, 1 - distance / connectDistance);
-                    }
+                for (let x = 0; x < canvas.width; x += wave.fontSize / 2) { // Adjust step based on font size
+                    const y = wave.amplitude * Math.sin(x * wave.frequency + time * wave.speed + wave.offset) + wave.y;
+                    ctx.fillText(wave.character, x, y);
                 }
-            }
+            });
+
+            time++;
         }
 
         function animate() {
@@ -159,8 +130,8 @@
             requestAnimationFrame(animate);
         }
 
-        window.addEventListener('resize', initializeParticles);
-        initializeParticles();
+        window.addEventListener('resize', initializeWaves);
+        initializeWaves();
         animate();
     </script>
 </body>
