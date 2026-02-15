@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Animation 17</title>
+    <title>Animation 19</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
             --background-color: #000000;
-            --main-text-color: #ffcccc; /* Light pink */
-            --accent-color: #ff69b4; /* Hot pink */
-            --secondary-text-color: #ff99cc; /* Medium pink */
+            --main-text-color: #f0f0f0;
+            --accent-color: #4a90e2; /* Cool blue */
+            --secondary-text-color: #88dddd;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
@@ -20,7 +20,7 @@
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             overflow: hidden;
         }
-        #wave-canvas {
+        #plasma-canvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -66,72 +66,59 @@
             margin-top: auto;
             width: 100%;
         }
+        .styled-image {
+            max-width: 90%; /* Responsive image */
+            height: auto;
+            border: 2px solid var(--accent-color);
+            padding: 5px;
+            background-color: rgba(255, 0, 255, 0.05); /* Transparent version of accent */
+            box-shadow: 0 0 15px var(--accent-color);
+            margin-top: 2rem;
+        }
     </style>
 </head>
 <body>
-    <canvas id="wave-canvas"></canvas>
+    <canvas id="plasma-canvas"></canvas>
     <div class="container">
-        <h1>[Message_Of_The_day]</h1>
-        <p>Spending valentines day tomorrow with my friends. Trying to give myself some love for the holiday too. I hope you guys have a great day together! Do something nice&nbsp; &nbsp; &nbsp; &nbsp;</p>
+        <h1>[My_valentines_dinner]</h1>
+        <img src="http://nonamer.xyz/media/valent.jpg" alt="Valentine's Day Image" class="styled-image">
     </div>
     <footer><p>
-
+    
     <script>
-        const canvas = document.getElementById('wave-canvas');
+        const canvas = document.getElementById('plasma-canvas');
         const ctx = canvas.getContext('2d');
 
-        let waves = [];
-        const numWaves = 7;
-        const waveChars = ['~', '-', '_', '=', '.', '/', '\\', '|', '+', '*', ':', ';', '`', '\'', '"', '^', '>', '<', '(', ')', '[', ']', '{', '}', '!', '?', '@', '#', '$', '%', '&'];
-
-        function initializeWaves() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            waves = [];
-            for (let i = 0; i < numWaves; i++) {
-                waves.push(createWave(i));
-            }
-        }
-
-        function createWave(index) {
-            return {
-                y: (canvas.height / numWaves) * index + (Math.random() * 50 - 25),
-                amplitude: Math.random() * 40 + 10,
-                frequency: Math.random() * 0.03 + 0.01,
-                speed: Math.random() * 0.03 + 0.01,
-                offset: Math.random() * 100,
-                character: waveChars[Math.floor(Math.random() * waveChars.length)],
-                fontSize: Math.random() * 10 + 10, // Vary font size
-                color: `hsla(${Math.random() * 60 + 300}, 100%, ${Math.random() * 50 + 50}%, ${Math.random() * 0.5 + 0.3})`
-            };
-        }
-
         let time = 0;
+        const gridSize = 10;
+        const asciiChars = ['.', ':', '-', '=', '+', '*', '#', '%', '@'];
 
         function draw() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            waves.forEach(wave => {
-                ctx.fillStyle = wave.color;
-                ctx.font = `${wave.fontSize}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                for (let x = 0; x < canvas.width; x += gridSize) {
+                    const value = Math.sin(x / 50 + time) + Math.sin(y / 50 + time) + Math.sin((x + y) / 50 + time) + Math.sin(Math.sqrt(x*x + y*y) / 50 + time);
+                    const normalized = (value + 4) / 8; // Normalize value to 0-1 range
 
-                for (let x = 0; x < canvas.width; x += wave.fontSize / 2) { // Adjust step based on font size
-                    const y = wave.amplitude * Math.sin(x * wave.frequency + time * wave.speed + wave.offset) + wave.y;
-                    ctx.fillText(wave.character, x, y);
+                    const charIndex = Math.floor(normalized * (asciiChars.length - 1));
+                    const character = asciiChars[charIndex];
+
+                    const hue = 180 + normalized * 60; // From blue-green to lighter blue
+                    ctx.fillStyle = `hsl(${hue}, 100%, 70%)`;
+                    ctx.font = `${gridSize}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
+                    ctx.fillText(character, x, y);
                 }
-            });
-
-            time++;
+            }
+            time += 0.03;
         }
 
         function animate() {
             draw();
             requestAnimationFrame(animate);
         }
-
-        window.addEventListener('resize', initializeWaves);
-        initializeWaves();
         animate();
     </script>
 </body>
