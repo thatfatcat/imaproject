@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Animation 20</title>
+    <title>Animation 23</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
             --background-color: #000000;
             --main-text-color: #f0f0f0;
-            --accent-color: #ffffff;
-            --secondary-text-color: #cccccc;
+            --accent-color: #4a90e2; /* Cool blue */
+            --secondary-text-color: #88dddd;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
@@ -20,7 +20,7 @@
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             overflow: hidden;
         }
-        #tunnel-canvas {
+        #morph-canvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -69,82 +69,114 @@
     </style>
 </head>
 <body>
-    <canvas id="tunnel-canvas"></canvas>
+    <canvas id="morph-canvas"></canvas>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <p>After a long break due to the stalking I was experiencing, I've decided to finally come back to social media. Not sure if to post about the situation or not.</p>
+        <p>I finished my app. I can send you a video of it in action if you want to see :). Also as im writing thisI noticed something: Billie is super active today and her head is straighter than usual! I think she might be winning!</p>
     </div>
     <footer><p>
 
     <script>
-        const canvas = document.getElementById('tunnel-canvas');
+        const canvas = document.getElementById('morph-canvas');
         const ctx = canvas.getContext('2d');
+        
+        let points = [];
+        let currentShapeIndex = 0;
+        let morphProgress = 0;
+        const morphSpeed = 0.005;
+        const holdDuration = 200; // aribtrary amount of 'frames'
+        let holdCounter = holdDuration;
 
-        let stars = [];
-        const numStars = 800; // Increased star count for a fuller effect
-        let centerX, centerY, maxRadius;
+        const shapes = {
+            // Heart
+            heart: [
+                {x:0,y:-0.3},{x:0.2,y:-0.5},{x:0.4,y:-0.4},{x:0.5,y:-0.2},{x:0.5,y:0},{x:0,y:0.5},
+                {x:-0.5,y:0},{x:-0.5,y:-0.2},{x:-0.4,y:-0.4},{x:-0.2,y:-0.5}
+            ],
+            // Star
+            star: [
+                {x:0,y:-0.5},{x:0.1,y:-0.2},{x:0.4,y:-0.2},{x:0.2,y:0},{x:0.3,y:0.3},{x:0,y:0.1},
+                {x:-0.3,y:0.3},{x:-0.2,y:0},{x:-0.4,y:-0.2},{x:-0.1,y:-0.2}
+            ],
+             // Box
+            box: [
+                {x:-0.5,y:-0.5},{x:0.5,y:-0.5},{x:0.5,y:0.5},{x:-0.5,y:0.5}
+            ]
+        };
 
-        function initializeStars() {
+        const shapeKeys = Object.keys(shapes);
+
+        // Normalize shapes to have the same number of points
+        const maxPoints = Math.max(...shapeKeys.map(key => shapes[key].length));
+        shapeKeys.forEach(key => {
+            const shape = shapes[key];
+            while (shape.length < maxPoints) {
+                shape.push({...shape[Math.floor(Math.random() * shape.length)]}); // Duplicate random points
+            }
+        });
+
+        function lerp(a, b, t) {
+            return a + (b - a) * t;
+        }
+
+        function setup() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            centerX = canvas.width / 2;
-            centerY = canvas.height / 2;
-            maxRadius = Math.sqrt(centerX * centerX + centerY * centerY);
-            stars = [];
-            for (let i = 0; i < numStars; i++) {
-                stars.push(createStar());
+            points = shapes[shapeKeys[currentShapeIndex]].map(p => ({...p})); // Initial points
+        }
+        
+        function draw() {
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const fromShape = shapes[shapeKeys[currentShapeIndex]];
+            const toShape = shapes[shapeKeys[(currentShapeIndex + 1) % shapeKeys.length]];
+            
+            if(holdCounter > 0){
+                holdCounter--;
+            } else {
+                 morphProgress += morphSpeed;
+            }
+           
+
+            if (morphProgress >= 1) {
+                morphProgress = 0;
+                holdCounter = holdDuration;
+                currentShapeIndex = (currentShapeIndex + 1) % shapeKeys.length;
+            }
+            
+            ctx.font = '40px ' + getComputedStyle(document.body).getPropertyValue('--font-primary');
+            ctx.textAlign = 'center';
+
+            for (let i = 0; i < maxPoints; i++) {
+                const hue = (time + i * 3) % 360;
+                ctx.fillStyle = `hsl(${hue}, 100%, 70%)`;
+                
+                const p1 = fromShape[i];
+                const p2 = toShape[i];
+
+                const x = lerp(p1.x, p2.x, morphProgress);
+                const y = lerp(p1.y, p2.y, morphProgress);
+                
+                const canvasX = x * (canvas.height / 2) + canvas.width / 2;
+                const canvasY = y * (canvas.height / 2) + canvas.height / 2;
+
+                ctx.fillText('*', canvasX, canvasY);
             }
         }
-
-        function createStar() {
-            return {
-                angle: Math.random() * Math.PI * 2,
-                radius: Math.random() * 2, // Start near the center
-                speed: Math.random() * 2 + 1
-            };
-        }
-
-        function draw() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // Fading effect
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            stars.forEach(star => {
-                // Update star position
-                star.radius += star.speed;
-
-                if (star.radius >= maxRadius) {
-                    // Reset star
-                    star.radius = 0;
-                    star.speed = Math.random() * 2 + 1;
-                }
-
-                const progress = star.radius / maxRadius;
-                const x = centerX + Math.cos(star.angle) * star.radius;
-                const y = centerY + Math.sin(star.angle) * star.radius;
-
-                // Calculate previous position for the trail
-                const prevRadius = Math.max(0, star.radius - (star.speed * 5)); // Trail length based on speed
-                const prevX = centerX + Math.cos(star.angle) * prevRadius;
-                const prevY = centerY + Math.sin(star.angle) * prevRadius;
-                
-                // Draw the streak
-                ctx.beginPath();
-                ctx.moveTo(prevX, prevY);
-                ctx.lineTo(x, y);
-                ctx.lineWidth = 1 + progress * 2.5; // Line gets thicker as it moves out
-                ctx.strokeStyle = `rgba(255, 255, 255, ${progress})`; // Line fades in
-                ctx.stroke();
-            });
-        }
+        
+        let time = 0;
 
         function animate() {
+            time++;
             draw();
             requestAnimationFrame(animate);
         }
 
-        window.addEventListener('resize', initializeStars);
-        initializeStars();
+        window.addEventListener('resize', setup);
+        setup();
         animate();
+
     </script>
 </body>
 </html>
