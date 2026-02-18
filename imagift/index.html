@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Animation 23</title>
+    <title>Animation 24</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -20,7 +20,7 @@
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             overflow: hidden;
         }
-        #morph-canvas {
+        #moire-canvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -46,7 +46,7 @@
         h1 {
             font-family: var(--font-display);
             font-size: 3rem;
-            color: var(--accent-color);
+            color: ghostwhite;
             text-transform: uppercase;
             letter-spacing: 2px;
             font-weight: normal;
@@ -66,109 +66,69 @@
             margin-top: auto;
             width: 100%;
         }
+        .styled-image {
+            max-width: 90%; /* Responsive image */
+            height: auto;
+            border: 2px solid var(--accent-color);
+            padding: 5px;
+            background-color: rgba(74, 144, 226, 0.05); /* Transparent version of accent */
+            box-shadow: 0 0 15px var(--accent-color);
+            margin-top: 2rem;
+        }
     </style>
 </head>
 <body>
-    <canvas id="morph-canvas"></canvas>
+    <canvas id="moire-canvas"></canvas>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <p>I finished my app. I can send you a video of it in action if you want to see :). Also as im writing thisI noticed something: Billie is super active today and her head is straighter than usual! I think she might be winning!</p>
+        <img src="http://nonamer.xyz/media/nart.jpg" alt="Digital art by Nart" class="styled-image">
     </div>
     <footer><p>
 
     <script>
-        const canvas = document.getElementById('morph-canvas');
+        const canvas = document.getElementById('moire-canvas');
         const ctx = canvas.getContext('2d');
-        
-        let points = [];
-        let currentShapeIndex = 0;
-        let morphProgress = 0;
-        const morphSpeed = 0.005;
-        const holdDuration = 200; // aribtrary amount of 'frames'
-        let holdCounter = holdDuration;
 
-        const shapes = {
-            // Heart
-            heart: [
-                {x:0,y:-0.3},{x:0.2,y:-0.5},{x:0.4,y:-0.4},{x:0.5,y:-0.2},{x:0.5,y:0},{x:0,y:0.5},
-                {x:-0.5,y:0},{x:-0.5,y:-0.2},{x:-0.4,y:-0.4},{x:-0.2,y:-0.5}
-            ],
-            // Star
-            star: [
-                {x:0,y:-0.5},{x:0.1,y:-0.2},{x:0.4,y:-0.2},{x:0.2,y:0},{x:0.3,y:0.3},{x:0,y:0.1},
-                {x:-0.3,y:0.3},{x:-0.2,y:0},{x:-0.4,y:-0.2},{x:-0.1,y:-0.2}
-            ],
-             // Box
-            box: [
-                {x:-0.5,y:-0.5},{x:0.5,y:-0.5},{x:0.5,y:0.5},{x:-0.5,y:0.5}
-            ]
-        };
-
-        const shapeKeys = Object.keys(shapes);
-
-        // Normalize shapes to have the same number of points
-        const maxPoints = Math.max(...shapeKeys.map(key => shapes[key].length));
-        shapeKeys.forEach(key => {
-            const shape = shapes[key];
-            while (shape.length < maxPoints) {
-                shape.push({...shape[Math.floor(Math.random() * shape.length)]}); // Duplicate random points
-            }
-        });
-
-        function lerp(a, b, t) {
-            return a + (b - a) * t;
-        }
+        let time = 0;
+        const spacing = 15;
+        const char = '#';
 
         function setup() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            points = shapes[shapeKeys[currentShapeIndex]].map(p => ({...p})); // Initial points
         }
-        
-        function draw() {
-            ctx.fillStyle = 'rgba(0,0,0,0.1)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            const fromShape = shapes[shapeKeys[currentShapeIndex]];
-            const toShape = shapes[shapeKeys[(currentShapeIndex + 1) % shapeKeys.length]];
-            
-            if(holdCounter > 0){
-                holdCounter--;
-            } else {
-                 morphProgress += morphSpeed;
-            }
-           
-
-            if (morphProgress >= 1) {
-                morphProgress = 0;
-                holdCounter = holdDuration;
-                currentShapeIndex = (currentShapeIndex + 1) % shapeKeys.length;
-            }
-            
-            ctx.font = '40px ' + getComputedStyle(document.body).getPropertyValue('--font-primary');
+        function drawCirclePattern(centerX, centerY, offset) {
+            ctx.font = '12px ' + getComputedStyle(document.body).getPropertyValue('--font-primary');
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
             ctx.textAlign = 'center';
 
-            for (let i = 0; i < maxPoints; i++) {
-                const hue = (time + i * 3) % 360;
-                ctx.fillStyle = `hsl(${hue}, 100%, 70%)`;
-                
-                const p1 = fromShape[i];
-                const p2 = toShape[i];
-
-                const x = lerp(p1.x, p2.x, morphProgress);
-                const y = lerp(p1.y, p2.y, morphProgress);
-                
-                const canvasX = x * (canvas.height / 2) + canvas.width / 2;
-                const canvasY = y * (canvas.height / 2) + canvas.height / 2;
-
-                ctx.fillText('*', canvasX, canvasY);
+            for (let r = 0; r < Math.max(canvas.width, canvas.height) / 1.5; r += spacing) {
+                const circumference = 2 * Math.PI * r;
+                const numChars = circumference / (spacing / 2);
+                for (let i = 0; i < numChars; i++) {
+                    const angle = (i / numChars) * 2 * Math.PI + offset;
+                    const x = centerX + r * Math.cos(angle);
+                    const y = centerY + r * Math.sin(angle);
+                    ctx.fillText(char, x, y);
+                }
             }
         }
-        
-        let time = 0;
+
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // Fading effect
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw first pattern (static)
+            drawCirclePattern(canvas.width / 2, canvas.height / 2, 0);
+
+            // Draw second pattern (now only rotating, not moving)
+            drawCirclePattern(canvas.width / 2, canvas.height / 2, time * 0.02);
+
+            time++;
+        }
 
         function animate() {
-            time++;
             draw();
             requestAnimationFrame(animate);
         }
@@ -176,7 +136,6 @@
         window.addEventListener('resize', setup);
         setup();
         animate();
-
     </script>
 </body>
 </html>
