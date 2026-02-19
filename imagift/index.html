@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Animation 24</title>
+    <title>Animation 25</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #000000;
+            --background-color: #00001a; /* Very dark blue */
             --main-text-color: #f0f0f0;
-            --accent-color: #4a90e2; /* Cool blue */
-            --secondary-text-color: #88dddd;
+            --accent-color: #ffffff;
+            --secondary-text-color: #ddddff;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
@@ -20,7 +20,7 @@
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             overflow: hidden;
         }
-        #moire-canvas {
+        #snow-canvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -46,7 +46,7 @@
         h1 {
             font-family: var(--font-display);
             font-size: 3rem;
-            color: ghostwhite;
+            color: var(--accent-color);
             text-transform: uppercase;
             letter-spacing: 2px;
             font-weight: normal;
@@ -66,66 +66,72 @@
             margin-top: auto;
             width: 100%;
         }
-        .styled-image {
-            max-width: 90%; /* Responsive image */
-            height: auto;
-            border: 2px solid var(--accent-color);
-            padding: 5px;
-            background-color: rgba(74, 144, 226, 0.05); /* Transparent version of accent */
-            box-shadow: 0 0 15px var(--accent-color);
-            margin-top: 2rem;
-        }
     </style>
 </head>
 <body>
-    <canvas id="moire-canvas"></canvas>
+    <canvas id="snow-canvas"></canvas>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <img src="http://nonamer.xyz/media/nart.jpg" alt="Digital art by Nart" class="styled-image">
+        <p>My therapist says that it would be good for me to try to get good at something competitive again like how I was with Judo, Counter Strike, and Yu Gi Oh. I'm not sure what to go for but I agree with her.&nbsp;&nbsp;</p>
     </div>
     <footer><p>
 
     <script>
-        const canvas = document.getElementById('moire-canvas');
+        const canvas = document.getElementById('snow-canvas');
         const ctx = canvas.getContext('2d');
 
-        let time = 0;
-        const spacing = 15;
-        const char = '#';
+        let snowflakes = [];
+        const numFlakes = 400;
+        const snowChars = ['*', '.', '`'];
 
-        function setup() {
+        function initializeSnow() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-        }
-
-        function drawCirclePattern(centerX, centerY, offset) {
-            ctx.font = '12px ' + getComputedStyle(document.body).getPropertyValue('--font-primary');
-            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
-            ctx.textAlign = 'center';
-
-            for (let r = 0; r < Math.max(canvas.width, canvas.height) / 1.5; r += spacing) {
-                const circumference = 2 * Math.PI * r;
-                const numChars = circumference / (spacing / 2);
-                for (let i = 0; i < numChars; i++) {
-                    const angle = (i / numChars) * 2 * Math.PI + offset;
-                    const x = centerX + r * Math.cos(angle);
-                    const y = centerY + r * Math.sin(angle);
-                    ctx.fillText(char, x, y);
-                }
+            snowflakes = [];
+            for (let i = 0; i < numFlakes; i++) {
+                snowflakes.push(createFlake());
             }
         }
 
+        function createFlake() {
+            return {
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 10 + 5,
+                speed: Math.random() * 1 + 0.5,
+                wind: Math.random() * 1 - 0.5,
+                character: snowChars[Math.floor(Math.random() * snowChars.length)],
+                opacity: Math.random() * 0.5 + 0.3
+            };
+        }
+
         function draw() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // Fading effect
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let i = 0; i < snowflakes.length; i++) {
+                const flake = snowflakes[i];
 
-            // Draw first pattern (static)
-            drawCirclePattern(canvas.width / 2, canvas.height / 2, 0);
+                flake.y += flake.speed;
+                flake.x += flake.wind;
+                
+                // Add a little side-to-side wobble
+                flake.x += Math.sin(flake.y / 50) * 0.2;
 
-            // Draw second pattern (now only rotating, not moving)
-            drawCirclePattern(canvas.width / 2, canvas.height / 2, time * 0.02);
-
-            time++;
+                if (flake.y > canvas.height) {
+                    flake.y = -flake.size;
+                    flake.x = Math.random() * canvas.width;
+                }
+                if (flake.x > canvas.width) {
+                    flake.x = 0;
+                }
+                if (flake.x < 0) {
+                    flake.x = canvas.width;
+                }
+                
+                ctx.font = `${flake.size}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
+                ctx.fillStyle = `rgba(255, 255, 255, ${flake.opacity})`;
+                ctx.fillText(flake.character, flake.x, flake.y);
+            }
         }
 
         function animate() {
@@ -133,8 +139,8 @@
             requestAnimationFrame(animate);
         }
 
-        window.addEventListener('resize', setup);
-        setup();
+        window.addEventListener('resize', initializeSnow);
+        initializeSnow();
         animate();
     </script>
 </body>
