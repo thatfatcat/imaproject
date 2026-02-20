@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Animation 25</title>
+    <title>Animation 26</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #00001a; /* Very dark blue */
+            --background-color: #000000;
             --main-text-color: #f0f0f0;
-            --accent-color: #ffffff;
-            --secondary-text-color: #ddddff;
+            --accent-color: #00ff00; /* Classic green terminal */
+            --secondary-text-color: #aaccaa;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
@@ -20,7 +20,7 @@
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             overflow: hidden;
         }
-        #snow-canvas {
+        #signal-canvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -69,79 +69,227 @@
     </style>
 </head>
 <body>
-    <canvas id="snow-canvas"></canvas>
+    <canvas id="signal-canvas"></canvas>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <p>My therapist says that it would be good for me to try to get good at something competitive again like how I was with Judo, Counter Strike, and Yu Gi Oh. I'm not sure what to go for but I agree with her.&nbsp;&nbsp;</p>
+        <p>Today Krishen invited me by surprise to a tech networking meeting at Sarasota Memorial Hospital. I got to see some crazy bleeding edge medical technology and meet people in the industry. I ran into some higher up faculty members at ringling, including the guy that is the head and engineer of the new 'creative technologies' degree. He came up to me later and gave me his business card and told me to reach out sometime, and that he thinks I can take classes for free at the school once I'm there two years. I also ran into the head of game design at ringling and he was very nice to me. As I walked away from him I heard him say "You never want to piss off the IT guy" to the woman next to him. The organization that made the meeting is looking for volunteers for next meeting and I'm considering it. Their goal is to make sarasota a Florida tech city. I have some pictures and funny stories from the event I can tell you.</p>
     </div>
     <footer><p>
 
     <script>
-        const canvas = document.getElementById('snow-canvas');
+        const canvas = document.getElementById('signal-canvas');
         const ctx = canvas.getContext('2d');
 
-        let snowflakes = [];
-        const numFlakes = 400;
-        const snowChars = ['*', '.', '`'];
+        const resolution = 10;
+        let signal, cols, rows;
+        let glitches = [];
+        const glitchChars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()[]{};:,.<>?';
 
-        function initializeSnow() {
+        function setup() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            snowflakes = [];
-            for (let i = 0; i < numFlakes; i++) {
-                snowflakes.push(createFlake());
-            }
-        }
-
-        function createFlake() {
-            return {
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                size: Math.random() * 10 + 5,
-                speed: Math.random() * 1 + 0.5,
-                wind: Math.random() * 1 - 0.5,
-                character: snowChars[Math.floor(Math.random() * snowChars.length)],
-                opacity: Math.random() * 0.5 + 0.3
-            };
+            cols = Math.floor(canvas.width / resolution);
+            rows = Math.floor(canvas.height / resolution);
+            signal = { x: 0, y: 0 };
         }
 
         function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            for (let i = 0; i < snowflakes.length; i++) {
-                const flake = snowflakes[i];
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                flake.y += flake.speed;
-                flake.x += flake.wind;
-                
-                // Add a little side-to-side wobble
-                flake.x += Math.sin(flake.y / 50) * 0.2;
+            // Draw and update the main signal
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
+            ctx.font = `${resolution}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
+            ctx.fillText('#', signal.x * resolution, signal.y * resolution);
 
-                if (flake.y > canvas.height) {
-                    flake.y = -flake.size;
-                    flake.x = Math.random() * canvas.width;
+            signal.x++;
+            if (signal.x >= cols) {
+                signal.x = 0;
+                signal.y++;
+                if (signal.y >= rows) {
+                    signal.y = 0;
                 }
-                if (flake.x > canvas.width) {
-                    flake.x = 0;
+            }
+
+            // Create new glitches randomly
+            if (Math.random() < 0.3) {
+                glitches.push({
+                    x: Math.floor(Math.random() * cols),
+                    y: Math.floor(Math.random() * rows),
+                    char: glitchChars.charAt(Math.floor(Math.random() * glitchChars.length)),
+                    life: 20 // life in frames
+                });
+            }
+
+            // Draw and update glitches
+            for (let i = glitches.length - 1; i >= 0; i--) {
+                const glitch = glitches[i];
+                ctx.fillStyle = `rgba(0, 255, 0, ${glitch.life / 20})`;
+                ctx.fillText(glitch.char, glitch.x * resolution, glitch.y * resolution);
+                glitch.life--;
+                if (glitch.life <= 0) {
+                    glitches.splice(i, 1);
                 }
-                if (flake.x < 0) {
-                    flake.x = canvas.width;
-                }
-                
-                ctx.font = `${flake.size}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
-                ctx.fillStyle = `rgba(255, 255, 255, ${flake.opacity})`;
-                ctx.fillText(flake.character, flake.x, flake.y);
             }
         }
 
         function animate() {
-            draw();
-            requestAnimationFrame(animate);
+            // Using setInterval instead of requestAnimationFrame for a more consistent,
+            // non-blocking timing, which fits the "unstoppable" theme.
+            setInterval(draw, 50);
         }
 
-        window.addEventListener('resize', initializeSnow);
-        initializeSnow();
+        window.addEventListener('resize', setup);
+        setup();
         animate();
     </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="3600">
+    <title>Animation 26</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
+        :root {
+            --background-color: #000000;
+            --main-text-color: #f0f0f0;
+            --accent-color: #00ff00; /* Classic green terminal */
+            --secondary-text-color: #aaccaa;
+            --font-primary: 'Xanh Mono', 'Courier New', monospace;
+            --font-display: 'VT323', monospace;
+        }
+        body, html {
+            height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
+            color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
+            overflow: hidden;
+        }
+        #signal-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        .container, footer {
+            position: relative;
+            z-index: 1;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4vw;
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        h1 {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: normal;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 0 10px var(--accent-color);
+        }
+        p {
+            margin-bottom: 1.5rem;
+            width: 100%;
+            max-width: 600px;
+        }
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            font-size: 0.9rem;
+            color: var(--secondary-text-color);
+            margin-top: auto;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="signal-canvas"></canvas>
+    <div class="container">
+        <h1>[Message_of_the_day]</h1>
+        <p>Today Krishen invited me by surprise to a tech networking meeting at Sarasota Memorial Hospital. I got to see some crazy bleeding edge medical technology and meet people in the industry. I ran into some higher up faculty members at ringling, including the guy that is the head and engineer of the new 'creative technologies' degree. He came up to me later and gave me his business card and told me to reach out sometime, and that he thinks I can take classes for free at the school once I'm there two years. I also ran into the head of game design at ringling and he was very nice to me. As I walked away from him I heard him say "You never want to piss off the IT guy" to the woman next to him. The organization that made the meeting is looking for volunteers for next meeting and I'm considering it. Their goal is to make sarasota a Florida tech city. I have some pictures and funny stories from the event I can tell you.</p>
+    </div>
+    <footer><p>
+
+    <script>
+        const canvas = document.getElementById('signal-canvas');
+        const ctx = canvas.getContext('2d');
+
+        const resolution = 10;
+        let signal, cols, rows;
+        let glitches = [];
+        const glitchChars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()[]{};:,.<>?';
+
+        function setup() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            cols = Math.floor(canvas.width / resolution);
+            rows = Math.floor(canvas.height / resolution);
+            signal = { x: 0, y: 0 };
+        }
+
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw and update the main signal
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
+            ctx.font = `${resolution}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
+            ctx.fillText('#', signal.x * resolution, signal.y * resolution);
+
+            signal.x++;
+            if (signal.x >= cols) {
+                signal.x = 0;
+                signal.y++;
+                if (signal.y >= rows) {
+                    signal.y = 0;
+                }
+            }
+
+            // Create new glitches randomly
+            if (Math.random() < 0.3) {
+                glitches.push({
+                    x: Math.floor(Math.random() * cols),
+                    y: Math.floor(Math.random() * rows),
+                    char: glitchChars.charAt(Math.floor(Math.random() * glitchChars.length)),
+                    life: 20 // life in frames
+                });
+            }
+
+            // Draw and update glitches
+            for (let i = glitches.length - 1; i >= 0; i--) {
+                const glitch = glitches[i];
+                ctx.fillStyle = `rgba(0, 255, 0, ${glitch.life / 20})`;
+                ctx.fillText(glitch.char, glitch.x * resolution, glitch.y * resolution);
+                glitch.life--;
+                if (glitch.life <= 0) {
+                    glitches.splice(i, 1);
+                }
+            }
+        }
+
+        function animate() {
+            // Using setInterval instead of requestAnimationFrame for a more consistent,
+            // non-blocking timing, which fits the "unstoppable" theme.
+            setInterval(draw, 50);
+        }
+
+        window.addEventListener('resize', setup);
+        setup();
+        animate();
+    </script>
+</body>
+</html>
+a
