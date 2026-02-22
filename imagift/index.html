@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Animation 27</title>
+    <title>Animation 29</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
             --background-color: #000000;
             --main-text-color: #f0f0f0;
-            --accent-color: #90ee90; /* Light Green */
-            --secondary-text-color: #8fbc8f; /* Dark Sea Green */
+            --accent-color: #ffff00; /* Yellow for the spotlight */
+            --secondary-text-color: #ddddaa;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
@@ -20,7 +20,7 @@
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             overflow: hidden;
         }
-        #tree-canvas {
+        #spotlight-canvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -69,75 +69,86 @@
     </style>
 </head>
 <body>
-    <canvas id="tree-canvas"></canvas>
+    <canvas id="spotlight-canvas"></canvas>
     <div class="container">
-        <h1>[Message_of_the_day]</h1>
-      <p>This week boss has been gone. Got to have a bit more freedom doing stuff and progress my work relationships a bit. I hung out with sophie and today stephen is here. I got guitar hero guitars and am playing all my favorite system of a down songs. Here are my possible things I've considered for competition:<br>
-      1. Overwatch.<br>
-      2. Poker/backgammon.<br>3. Try to set a world record in something.<br>4. Guitar hero</p>
-        
+        <h1>[Message_Of_The_day]</h1>
+        <p>Today people were supposed to hang out, but everyone except Stephen cancelld. Him and I went to the grocery store and together cooked a meal of mac n cheese buffalo chicken with chicken caesar salad. I enjoyed the process quite a bit. Maybe I'll start cooking&nbsp; &nbsp;</p>
     </div>
     <footer><p>
 
     <script>
-        const canvas = document.getElementById('tree-canvas');
+        const canvas = document.getElementById('spotlight-canvas');
         const ctx = canvas.getContext('2d');
+
+        const resolution = 12;
+        const allChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()[]{}';
+        let cols, rows;
+        let charGrid;
+        let time = 0;
+
+        function make2DArray(cols, rows) {
+            let arr = new Array(cols);
+            for (let i = 0; i < arr.length; i++) {
+                arr[i] = new Array(rows);
+            }
+            return arr;
+        }
 
         function setup() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            cols = Math.floor(canvas.width / resolution);
+            rows = Math.floor(canvas.height / resolution);
             
-            const startX = canvas.width / 2;
-            const startY = canvas.height;
-            const length = Math.random() * 50 + 100;
-            const angle = -Math.PI / 2;
-            const branchWidth = 10;
-            
-            drawBranch(startX, startY, length, angle, branchWidth);
-        }
-        
-        function drawBranch(x, y, len, angle, width) {
-            if (len < 10) return;
-
-            const endX = x + len * Math.cos(angle);
-            const endY = y + len * Math.sin(angle);
-            
-            // Draw the branch with ASCII
-            drawAsciiLine({x, y}, {x: endX, y: endY}, width);
-
-            // Create new branches
-            setTimeout(() => {
-                drawBranch(endX, endY, len * (Math.random() * 0.2 + 0.7), angle + Math.random() * 0.5 - 0.25, width * 0.7);
-                if(Math.random() > 0.4) { // Sometimes create a second branch
-                    drawBranch(endX, endY, len * (Math.random() * 0.2 + 0.7), angle - Math.random() * 0.5 - 0.25, width * 0.7);
+            charGrid = make2DArray(cols, rows);
+            for (let i = 0; i < cols; i++) {
+                for (let j = 0; j < rows; j++) {
+                    charGrid[i][j] = allChars.charAt(Math.floor(Math.random() * allChars.length));
                 }
-            }, 100);
-        }
-
-        function drawAsciiLine(p1, p2, width) {
-            const dx = p2.x - p1.x;
-            const dy = p2.y - p1.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            const steps = distance / (width/2);
-            
-            const char = width > 5 ? '#' : '|';
-            const hue = 90 + width * 3; // From green to brown-ish
-            ctx.fillStyle = `hsl(${hue}, 80%, 50%)`;
-            ctx.font = `${width}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
-
-            for (let i = 0; i < steps; i++) {
-                const x = p1.x + (dx / steps) * i;
-                const y = p1.y + (dy / steps) * i;
-                ctx.fillText(char, x, y);
             }
         }
 
-        function animate() {
-            // New tree every 10 seconds
-            setInterval(setup, 10000);
+        function draw() {
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--background-color');
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const spotlight = {
+                x: canvas.width / 2 + Math.sin(time * 0.02) * (canvas.width / 3),
+                y: canvas.height / 2 + Math.cos(time * 0.03) * (canvas.height / 3),
+                radius: 150
+            };
+
+            ctx.font = `${resolution}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
+
+            for (let i = 0; i < cols; i++) {
+                for (let j = 0; j < rows; j++) {
+                    const charX = i * resolution;
+                    const charY = j * resolution;
+                    
+                    const dx = charX - spotlight.x;
+                    const dy = charY - spotlight.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < spotlight.radius) {
+                        const opacity = 1 - (distance / spotlight.radius);
+                        ctx.fillStyle = `rgba(255, 255, 0, ${opacity})`;
+                        ctx.fillText(charGrid[i][j], charX, charY);
+                    } else {
+                        // Optionally draw dim characters outside the spotlight
+                         ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                         ctx.fillText(charGrid[i][j], charX, charY);
+                    }
+                }
+            }
+            time++;
         }
 
+        function animate() {
+            draw();
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', setup);
         setup();
         animate();
 
