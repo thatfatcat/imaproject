@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Animation 29</title>
+    <title>Animation 31</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
             --background-color: #000000;
-            --main-text-color: #f0f0f0;
-            --accent-color: #ffff00; /* Yellow for the spotlight */
-            --secondary-text-color: #ddddaa;
+            --main-text-color: #77aaff;
+            --accent-color: #808080; /* Cool blue */
+            --secondary-text-color: #88dddd;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
@@ -20,7 +20,7 @@
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             overflow: hidden;
         }
-        #spotlight-canvas {
+        #maze-canvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -46,7 +46,7 @@
         h1 {
             font-family: var(--font-display);
             font-size: 3rem;
-            color: var(--accent-color);
+            color: var(77aaff);
             text-transform: uppercase;
             letter-spacing: 2px;
             font-weight: normal;
@@ -57,6 +57,7 @@
             margin-bottom: 1.5rem;
             width: 100%;
             max-width: 600px;
+            font-size: 1.5rem;
         }
         footer {
             text-align: center;
@@ -69,87 +70,135 @@
     </style>
 </head>
 <body>
-    <canvas id="spotlight-canvas"></canvas>
+    <canvas id="maze-canvas"></canvas>
     <div class="container">
-        <h1>[Message_Of_The_day]</h1>
-        <p>Today people were supposed to hang out, but everyone except Stephen cancelld. Him and I went to the grocery store and together cooked a meal of mac n cheese buffalo chicken with chicken caesar salad. I enjoyed the process quite a bit. Maybe I'll start cooking&nbsp; &nbsp;</p>
+        <h1>[Message_of_the_day]</h1>
+        <p>Today I went longboarding with Sophie on the legacy trail, and talked to safta. I want to visit Israel soon. I miss it so much. Also, I looked how much people with my job get paid in Switzerland. It's about triple the amount of how much I get here. Food for thought.</p>
     </div>
     <footer><p>
 
     <script>
-        const canvas = document.getElementById('spotlight-canvas');
+        const canvas = document.getElementById('maze-canvas');
         const ctx = canvas.getContext('2d');
 
-        const resolution = 12;
-        const allChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()[]{}';
+        const resolution = 10;
         let cols, rows;
-        let charGrid;
-        let time = 0;
-
-        function make2DArray(cols, rows) {
-            let arr = new Array(cols);
-            for (let i = 0; i < arr.length; i++) {
-                arr[i] = new Array(rows);
-            }
-            return arr;
-        }
-
+        let grid;
+        let current;
+        let stack = [];
+        
         function setup() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             cols = Math.floor(canvas.width / resolution);
             rows = Math.floor(canvas.height / resolution);
+            grid = new Array(cols).fill(null).map(() => new Array(rows).fill(null).map(() => new Cell()));
             
-            charGrid = make2DArray(cols, rows);
-            for (let i = 0; i < cols; i++) {
-                for (let j = 0; j < rows; j++) {
-                    charGrid[i][j] = allChars.charAt(Math.floor(Math.random() * allChars.length));
-                }
+            // Start the maze generation
+            current = grid[0][0];
+            current.visited = true;
+            stack.push(current);
+        }
+
+        class Cell {
+            constructor() {
+                this.walls = [true, true, true, true]; // Top, Right, Bottom, Left
+                this.visited = false;
             }
         }
 
         function draw() {
             ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--background-color');
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            const spotlight = {
-                x: canvas.width / 2 + Math.sin(time * 0.02) * (canvas.width / 3),
-                y: canvas.height / 2 + Math.cos(time * 0.03) * (canvas.height / 3),
-                radius: 150
-            };
-
-            ctx.font = `${resolution}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
+            ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
+            ctx.lineWidth = 2;
 
             for (let i = 0; i < cols; i++) {
                 for (let j = 0; j < rows; j++) {
-                    const charX = i * resolution;
-                    const charY = j * resolution;
-                    
-                    const dx = charX - spotlight.x;
-                    const dy = charY - spotlight.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (distance < spotlight.radius) {
-                        const opacity = 1 - (distance / spotlight.radius);
-                        ctx.fillStyle = `rgba(255, 255, 0, ${opacity})`;
-                        ctx.fillText(charGrid[i][j], charX, charY);
-                    } else {
-                        // Optionally draw dim characters outside the spotlight
-                         ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-                         ctx.fillText(charGrid[i][j], charX, charY);
-                    }
+                    const x = i * resolution;
+                    const y = j * resolution;
+                    const cell = grid[i][j];
+
+                    if (cell.walls[0]) ctx.strokeRect(x, y, resolution, 0); // Top
+                    if (cell.walls[1]) ctx.strokeRect(x + resolution, y, 0, resolution); // Right
+                    if (cell.walls[2]) ctx.strokeRect(x, y + resolution, resolution, 0); // Bottom
+                    if (cell.walls[3]) ctx.strokeRect(x, y, 0, resolution); // Left
                 }
             }
-            time++;
+            
+            // Highlight the current cell
+            ctx.fillStyle = 'rgba(255, 0, 255, 0.5)';
+            ctx.fillRect(current.i * resolution, current.j * resolution, resolution, resolution);
+            
+            // Maze generation step
+            const next = checkNeighbors(current.i, current.j);
+            if(next){
+                next.visited = true;
+                stack.push(current);
+                removeWalls(current, next);
+                current = next;
+            } else if (stack.length > 0) {
+                current = stack.pop();
+            } else {
+                 // Maze is complete, restart
+                 setTimeout(setup, 2000);
+                 return; // Stop this animation loop
+            }
+        }
+
+        function checkNeighbors(i, j) {
+            let neighbors = [];
+            const top    = grid[i]?.[j - 1];
+            const right  = grid[i + 1]?.[j];
+            const bottom = grid[i]?.[j + 1];
+            const left   = grid[i - 1]?.[j];
+
+            if (top && !top.visited) neighbors.push({cell: top, i: i, j: j - 1});
+            if (right && !right.visited) neighbors.push({cell: right, i: i + 1, j: j});
+            if (bottom && !bottom.visited) neighbors.push({cell: bottom, i: i, j: j + 1});
+            if (left && !left.visited) neighbors.push({cell: left, i: i - 1, j: j});
+
+            if (neighbors.length > 0) {
+                const r = Math.floor(Math.random() * neighbors.length);
+                grid[neighbors[r].i][neighbors[r].j].i = neighbors[r].i;
+                grid[neighbors[r].i][neighbors[r].j].j = neighbors[r].j;
+                return grid[neighbors[r].i][neighbors[r].j];
+            } else {
+                return undefined;
+            }
+        }
+        
+        function removeWalls(a, b){
+             const x = a.i - b.i;
+             if(x === 1) { a.walls[3] = false; b.walls[1] = false;}
+             else if (x === -1) { a.walls[1] = false; b.walls[3] = false; }
+             const y = a.j - b.j;
+             if(y === 1) { a.walls[0] = false; b.walls[2] = false; }
+             else if (y === -1) { a.walls[2] = false; b.walls[0] = false; }
         }
 
         function animate() {
             draw();
             requestAnimationFrame(animate);
         }
+        
+        // Give each cell its index
+        function assignIndices(){
+             for (let i = 0; i < cols; i++) {
+                for (let j = 0; j < rows; j++) {
+                    grid[i][j].i = i;
+                    grid[i][j].j = j;
+                }
+            }
+        }
 
-        window.addEventListener('resize', setup);
+        window.addEventListener('resize', ()=>{
+            setup();
+            assignIndices();
+        });
+        
         setup();
+        assignIndices();
         animate();
 
     </script>

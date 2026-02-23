@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="3600">
+    <title>Animation 30</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
+        :root {
+            --background-color: #000000;
+            --main-text-color: #f0f0f0; 
+            --accent-color: #00ff00; /* Glitch green */
+            --secondary-text-color: #aaccaa;
+            --font-primary: 'Xanh Mono', 'Courier New', monospace;
+            --font-display: 'VT323', monospace;
+        }
+        body, html {
+            height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
+            color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
+            overflow: hidden;
+        }
+        #glitch-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        .container, footer {
+            position: relative;
+            z-index: 1;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4vw;
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        h1, p, footer {
+           pointer-events: none; /* Make HTML text non-interactive */
+        }
+    </style>
+</head>
+<body>
+    <canvas id="glitch-canvas"></canvas>
+    <div class="container">
+        <!-- The main text is now rendered on the canvas -->
+    </div>
+    <footer><p>
+
+    <script>
+        const canvas = document.getElementById('glitch-canvas');
+        const ctx = canvas.getContext('2d');
+
+        const mainText = "[Message Corrupted]";
+        const allChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()[]{}<>';
+        let glitching = false;
+        let glitchCounter = 0;
+
+        function setup() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const fontSize = canvas.width / 20;
+
+            ctx.font = `${fontSize}px ${getComputedStyle(document.body).getPropertyValue('--font-display')}`;
+            ctx.textAlign = 'center';
+            
+            // Trigger a glitch randomly
+            if (!glitching && Math.random() < 0.05) {
+                glitching = true;
+                glitchCounter = 20; // Glitch for 20 frames
+            }
+            
+            if (glitching) {
+                drawGlitch(centerX, centerY, fontSize);
+                glitchCounter--;
+                if (glitchCounter <= 0) {
+                    glitching = false;
+                }
+            } else {
+                ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
+                ctx.fillText(mainText, centerX, centerY);
+            }
+        }
+
+        function drawGlitch(x, y, fontSize) {
+            let glitchText = '';
+            for (let i = 0; i < mainText.length; i++) {
+                glitchText += Math.random() < 0.85 ? mainText[i] : allChars.charAt(Math.floor(Math.random() * allChars.length));
+            }
+            
+            // Chromatic aberration effect
+            ctx.fillStyle = 'rgba(255, 0, 255, 0.5)';
+            ctx.fillText(glitchText, x + Math.random() * 20 - 10, y + Math.random() * 10 - 5);
+            ctx.fillStyle = 'rgba(0, 255, 255, 0.5)';
+            ctx.fillText(glitchText, x + Math.random() * 20 - 10, y + Math.random() * 10 - 5);
+            
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
+            ctx.fillText(glitchText, x, y);
+
+            // Scan lines
+            if(Math.random() < 0.3){
+                const lineY = Math.random() * canvas.height;
+                const lineHeight = Math.random() * 10 + 1;
+                ctx.fillStyle = `rgba(0, 255, 0, ${Math.random() * 0.3})`;
+                ctx.fillRect(0, lineY, canvas.width, lineHeight);
+            }
+        }
+
+        function animate() {
+            draw();
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', setup);
+        setup();
+        animate();
+
+    </script>
+</body>
+</html>
