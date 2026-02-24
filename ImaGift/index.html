@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Animation 31</title>
+    <title>Animation 32</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
             --background-color: #000000;
-            --main-text-color: #77aaff;
-            --accent-color: #808080; /* Cool blue */
-            --secondary-text-color: #88dddd;
+            --main-text-color: #f0f0f0;
+            --accent-color: #ffffff; /* Initial color, will be changed by JS */
+            --secondary-text-color: #cccccc;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
@@ -20,7 +20,7 @@
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             overflow: hidden;
         }
-        #maze-canvas {
+        #bounce-canvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -46,7 +46,7 @@
         h1 {
             font-family: var(--font-display);
             font-size: 3rem;
-            color: var(77aaff);
+            color: var(--accent-color);
             text-transform: uppercase;
             letter-spacing: 2px;
             font-weight: normal;
@@ -57,7 +57,6 @@
             margin-bottom: 1.5rem;
             width: 100%;
             max-width: 600px;
-            font-size: 1.5rem;
         }
         footer {
             text-align: center;
@@ -70,137 +69,84 @@
     </style>
 </head>
 <body>
-    <canvas id="maze-canvas"></canvas>
+    <canvas id="bounce-canvas"></canvas>
     <div class="container">
-        <h1>[Message_of_the_day]</h1>
-        <p>Today I went longboarding with Sophie on the legacy trail, and talked to safta. I want to visit Israel soon. I miss it so much. Also, I looked how much people with my job get paid in Switzerland. It's about triple the amount of how much I get here. Food for thought.</p>
+        <h1>[message_of_the_day]</h1>
+        <p>Tomorrow I have a talk with the department director about my future roles and what they want me to learn. I have a suspicion that they want to decelerate my advancement. I think it's a bad talk and I need to be ready to stand my ground while not burning bridges. Wish me luck.&nbsp;</p>
     </div>
     <footer><p>
 
     <script>
-        const canvas = document.getElementById('maze-canvas');
+        const canvas = document.getElementById('bounce-canvas');
         const ctx = canvas.getContext('2d');
 
-        const resolution = 10;
-        let cols, rows;
-        let grid;
-        let current;
-        let stack = [];
-        
+        let logos = [];
+        const numLogos = 5;
+
+        function createLogo() {
+            const fontSize = 30;
+            ctx.font = `${fontSize}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
+            return {
+                text: "[*]",
+                x: Math.random() * (canvas.width - 100),
+                y: Math.random() * (canvas.height - 50),
+                vx: (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 2 + 1),
+                vy: (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 2 + 1),
+                color: `hsl(${Math.random() * 360}, 100%, 70%)`,
+                fontSize: fontSize,
+                width: ctx.measureText("[*]").width
+            };
+        }
+
         function setup() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            cols = Math.floor(canvas.width / resolution);
-            rows = Math.floor(canvas.height / resolution);
-            grid = new Array(cols).fill(null).map(() => new Array(rows).fill(null).map(() => new Cell()));
-            
-            // Start the maze generation
-            current = grid[0][0];
-            current.visited = true;
-            stack.push(current);
-        }
-
-        class Cell {
-            constructor() {
-                this.walls = [true, true, true, true]; // Top, Right, Bottom, Left
-                this.visited = false;
+            logos = [];
+            for(let i = 0; i < numLogos; i++){
+                logos.push(createLogo());
             }
         }
 
         function draw() {
-            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--background-color');
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
-            ctx.lineWidth = 2;
 
-            for (let i = 0; i < cols; i++) {
-                for (let j = 0; j < rows; j++) {
-                    const x = i * resolution;
-                    const y = j * resolution;
-                    const cell = grid[i][j];
+            logos.forEach(logo => {
+                // Update position
+                logo.x += logo.vx;
+                logo.y += logo.vy;
 
-                    if (cell.walls[0]) ctx.strokeRect(x, y, resolution, 0); // Top
-                    if (cell.walls[1]) ctx.strokeRect(x + resolution, y, 0, resolution); // Right
-                    if (cell.walls[2]) ctx.strokeRect(x, y + resolution, resolution, 0); // Bottom
-                    if (cell.walls[3]) ctx.strokeRect(x, y, 0, resolution); // Left
+                // Collision detection
+                let hitWall = false;
+                if (logo.x + logo.width > canvas.width || logo.x < 0) {
+                    logo.vx *= -1;
+                    hitWall = true;
                 }
-            }
-            
-            // Highlight the current cell
-            ctx.fillStyle = 'rgba(255, 0, 255, 0.5)';
-            ctx.fillRect(current.i * resolution, current.j * resolution, resolution, resolution);
-            
-            // Maze generation step
-            const next = checkNeighbors(current.i, current.j);
-            if(next){
-                next.visited = true;
-                stack.push(current);
-                removeWalls(current, next);
-                current = next;
-            } else if (stack.length > 0) {
-                current = stack.pop();
-            } else {
-                 // Maze is complete, restart
-                 setTimeout(setup, 2000);
-                 return; // Stop this animation loop
-            }
-        }
+                if (logo.y > canvas.height || logo.y - logo.fontSize < 0) {
+                    logo.vy *= -1;
+                    hitWall = true;
+                }
 
-        function checkNeighbors(i, j) {
-            let neighbors = [];
-            const top    = grid[i]?.[j - 1];
-            const right  = grid[i + 1]?.[j];
-            const bottom = grid[i]?.[j + 1];
-            const left   = grid[i - 1]?.[j];
+                // Change color on hit
+                if (hitWall) {
+                    logo.color = `hsl(${Math.random() * 360}, 100%, 70%)`;
+                }
 
-            if (top && !top.visited) neighbors.push({cell: top, i: i, j: j - 1});
-            if (right && !right.visited) neighbors.push({cell: right, i: i + 1, j: j});
-            if (bottom && !bottom.visited) neighbors.push({cell: bottom, i: i, j: j + 1});
-            if (left && !left.visited) neighbors.push({cell: left, i: i - 1, j: j});
-
-            if (neighbors.length > 0) {
-                const r = Math.floor(Math.random() * neighbors.length);
-                grid[neighbors[r].i][neighbors[r].j].i = neighbors[r].i;
-                grid[neighbors[r].i][neighbors[r].j].j = neighbors[r].j;
-                return grid[neighbors[r].i][neighbors[r].j];
-            } else {
-                return undefined;
-            }
-        }
-        
-        function removeWalls(a, b){
-             const x = a.i - b.i;
-             if(x === 1) { a.walls[3] = false; b.walls[1] = false;}
-             else if (x === -1) { a.walls[1] = false; b.walls[3] = false; }
-             const y = a.j - b.j;
-             if(y === 1) { a.walls[0] = false; b.walls[2] = false; }
-             else if (y === -1) { a.walls[2] = false; b.walls[0] = false; }
+                // Draw the logo
+                ctx.fillStyle = logo.color;
+                ctx.font = `${logo.fontSize}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
+                ctx.fillText(logo.text, logo.x, logo.y);
+            });
         }
 
         function animate() {
             draw();
             requestAnimationFrame(animate);
         }
-        
-        // Give each cell its index
-        function assignIndices(){
-             for (let i = 0; i < cols; i++) {
-                for (let j = 0; j < rows; j++) {
-                    grid[i][j].i = i;
-                    grid[i][j].j = j;
-                }
-            }
-        }
 
-        window.addEventListener('resize', ()=>{
-            setup();
-            assignIndices();
-        });
-        
+        window.addEventListener('resize', setup);
         setup();
-        assignIndices();
         animate();
-
     </script>
 </body>
 </html>
