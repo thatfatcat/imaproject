@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Animation 32</title>
+    <title>Animation 33</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
             --background-color: #000000;
             --main-text-color: #f0f0f0;
-            --accent-color: #ffffff; /* Initial color, will be changed by JS */
-            --secondary-text-color: #cccccc;
+            --accent-color: #8a2be2; /* Blue Violet */
+            --secondary-text-color: #9370db; /* Medium Purple */
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
@@ -20,7 +20,7 @@
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             overflow: hidden;
         }
-        #bounce-canvas {
+        #stream-canvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -69,78 +69,90 @@
     </style>
 </head>
 <body>
-    <canvas id="bounce-canvas"></canvas>
+    <canvas id="stream-canvas"></canvas>
     <div class="container">
         <h1>[message_of_the_day]</h1>
-        <p>Tomorrow I have a talk with the department director about my future roles and what they want me to learn. I have a suspicion that they want to decelerate my advancement. I think it's a bad talk and I need to be ready to stand my ground while not burning bridges. Wish me luck.&nbsp;</p>
+      <p>Thank you guys for calling yesterday. It meant a lot.&nbsp;</p>
+        <p>You guys are the best part of me.&nbsp;</p>
     </div>
     <footer><p>
 
     <script>
-        const canvas = document.getElementById('bounce-canvas');
+        const canvas = document.getElementById('stream-canvas');
         const ctx = canvas.getContext('2d');
 
-        let logos = [];
-        const numLogos = 5;
-
-        function createLogo() {
-            const fontSize = 30;
-            ctx.font = `${fontSize}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
-            return {
-                text: "[*]",
-                x: Math.random() * (canvas.width - 100),
-                y: Math.random() * (canvas.height - 50),
-                vx: (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 2 + 1),
-                vy: (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 2 + 1),
-                color: `hsl(${Math.random() * 360}, 100%, 70%)`,
-                fontSize: fontSize,
-                width: ctx.measureText("[*]").width
-            };
-        }
+        const resolution = 20;
+        let cols, rows;
+        let streams = [];
+        const allChars = '01'; // Binary theme
 
         function setup() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            logos = [];
-            for(let i = 0; i < numLogos; i++){
-                logos.push(createLogo());
+            cols = Math.floor(canvas.width / resolution);
+            rows = Math.floor(canvas.height / resolution);
+            streams = [];
+            for (let i = 0; i < cols; i++) {
+                streams.push(new Stream(i * resolution));
+            }
+        }
+        
+        class Symbol {
+            constructor(x, y, speed){
+                this.x = x;
+                this.y = y;
+                this.speed = speed;
+                this.value;
+                this.switchInterval = Math.round(Math.random() * 20 + 5);
+            }
+            
+            setToRandomSymbol(frameCount){
+                 if(frameCount % this.switchInterval == 0){
+                    this.value = allChars.charAt(Math.floor(Math.random() * allChars.length));
+                 }
+            }
+
+            rain(){
+                this.y = (this.y >= canvas.height) ? 0 : this.y += this.speed;
             }
         }
 
-        function draw() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            logos.forEach(logo => {
-                // Update position
-                logo.x += logo.vx;
-                logo.y += logo.vy;
-
-                // Collision detection
-                let hitWall = false;
-                if (logo.x + logo.width > canvas.width || logo.x < 0) {
-                    logo.vx *= -1;
-                    hitWall = true;
+        class Stream {
+            constructor(x){
+                this.x = x;
+                this.symbols = [];
+                this.totalSymbols = Math.round(Math.random() * 20 + 5);
+                this.speed = Math.random() * 5 + 2;
+                this.generateSymbols();
+            }
+            
+            generateSymbols(){
+                let y = Math.random() * -500;
+                for(let i = 0; i <= this.totalSymbols; i++){
+                    const symbol = new Symbol(this.x, y, this.speed);
+                    this.symbols.push(symbol);
+                    y -= resolution;
                 }
-                if (logo.y > canvas.height || logo.y - logo.fontSize < 0) {
-                    logo.vy *= -1;
-                    hitWall = true;
-                }
-
-                // Change color on hit
-                if (hitWall) {
-                    logo.color = `hsl(${Math.random() * 360}, 100%, 70%)`;
-                }
-
-                // Draw the logo
-                ctx.fillStyle = logo.color;
-                ctx.font = `${logo.fontSize}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
-                ctx.fillText(logo.text, logo.x, logo.y);
-            });
+            }
+            
+            render(frameCount){
+                 this.symbols.forEach(symbol => {
+                    const hue = (symbol.y / canvas.height) * 360; // Color changes with position
+                    ctx.fillStyle = `hsl(${hue}, 100%, 70%)`;
+                    ctx.font = `${resolution}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
+                    ctx.fillText(symbol.value, symbol.x, symbol.y);
+                    symbol.rain();
+                    symbol.setToRandomSymbol(frameCount);
+                 });
+            }
         }
 
+        let frameCount = 0;
         function animate() {
-            draw();
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            streams.forEach(stream => stream.render(frameCount));
+            frameCount++;
             requestAnimationFrame(animate);
         }
 
