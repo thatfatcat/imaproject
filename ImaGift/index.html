@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Animation 34</title>
+    <title>Animation 36</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
             --background-color: #000000;
             --main-text-color: #f0f0f0;
-            --accent-color: #ffffff;
-            --secondary-text-color: #cccccc;
+            --accent-color: #00ff00; /* Default green for Matrix-like */
+            --secondary-text-color: #aaccaa;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
@@ -20,7 +20,7 @@
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             overflow: hidden;
         }
-        #worms-canvas {
+        #digital-rain-canvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -69,77 +69,70 @@
     </style>
 </head>
 <body>
-    <canvas id="worms-canvas"></canvas>
+    <canvas id="digital-rain-canvas"></canvas>
     <div class="container">
-        <h1>[message_of_the_day]</h1>
-        <p>The dentist said I have no cavities :) I've been feeling kind of meh but realized I have not been taking my stomach meds consistently. Hopefully that helps. I want to get the invisalign for my teeth, they said they'd be straight in a couple of months.&nbsp;</p>
+        <h1>[Message_of_the_day]</h1>
+        <p>Feeling a weird mix of loneliness and need for alone time. I saw Kaeden today for the first time in 3-4 months. It was nice. Cuddling Thorfinn to sleep right now.</p>
     </div>
     <footer><p>
 
     <script>
-        const canvas = document.getElementById('worms-canvas');
+        const canvas = document.getElementById('digital-rain-canvas');
         const ctx = canvas.getContext('2d');
 
-        let worms = [];
-        const numWorms = 10;
+        let fontSize = 16;
+        let columns;
+        let drops = [];
+        let frameCount = 0;
+        
+        const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()_+-=[]{}|;:",.<>?/`~';
 
-        function setup() {
+        function initializeRain() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            worms = [];
-            for (let i = 0; i < numWorms; i++) {
-                worms.push(new Worm());
+            columns = Math.floor(canvas.width / fontSize);
+            drops = [];
+            for (let i = 0; i < columns; i++) {
+                drops[i] = Math.random() * canvas.height / fontSize; // Start drops at random y positions
             }
         }
 
-        class Worm {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.angle = Math.random() * Math.PI * 2;
-                this.speed = Math.random() * 2 + 1;
-                this.color = `hsl(${Math.random() * 360}, 100%, 70%)`;
-                this.char = '#';
-                this.fontSize = 15;
-            }
+        function drawRain() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            move() {
-                this.x += Math.cos(this.angle) * this.speed;
-                this.y += Math.sin(this.angle) * this.speed;
+            ctx.font = fontSize + 'px ' + getComputedStyle(document.body).getPropertyValue('--font-primary');
+            ctx.textAlign = 'center';
 
-                // Randomly change direction
-                if (Math.random() < 0.1) {
-                    this.angle += Math.random() * 0.5 - 0.25;
+            const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim();
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = characters.charAt(Math.floor(Math.random() * characters.length));
+                
+                // Fixed green color
+                ctx.fillStyle = accentColor;
+
+                // Glowing effect
+                ctx.shadowColor = accentColor;
+                ctx.shadowBlur = 10;
+
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                
+                drops[i]+=1; // Increased speed for dynamic rain
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
                 }
-
-                // Bounce off walls
-                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
-                    this.angle += Math.PI;
-                }
             }
-
-            draw() {
-                ctx.fillStyle = this.color;
-                ctx.font = `${this.fontSize}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
-                ctx.fillText(this.char, this.x, this.y);
-            }
+            frameCount++;
         }
 
         function animate() {
-            // Fading trail effect
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            worms.forEach(worm => {
-                worm.move();
-                worm.draw();
-            });
-
+            drawRain();
             requestAnimationFrame(animate);
         }
 
-        window.addEventListener('resize', setup);
-        setup();
+        window.addEventListener('resize', initializeRain);
+        initializeRain();
         animate();
     </script>
 </body>
