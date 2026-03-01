@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Animation 36</title>
+    <title>Animation 37</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
             --background-color: #000000;
             --main-text-color: #f0f0f0;
-            --accent-color: #00ff00; /* Default green for Matrix-like */
-            --secondary-text-color: #aaccaa;
+            --accent-color: #ff00ff; /* Magenta */
+            --secondary-text-color: #ff99ff;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
@@ -20,7 +20,7 @@
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             overflow: hidden;
         }
-        #digital-rain-canvas {
+        #tunnel-canvas {
             position: fixed;
             top: 0;
             left: 0;
@@ -69,70 +69,83 @@
     </style>
 </head>
 <body>
-    <canvas id="digital-rain-canvas"></canvas>
+    <canvas id="tunnel-canvas"></canvas>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <p>Feeling a weird mix of loneliness and need for alone time. I saw Kaeden today for the first time in 3-4 months. It was nice. Cuddling Thorfinn to sleep right now.</p>
+        <p>Therapist agrees with you that I should talk to Joanne. Sophie and Nicole came over today and they cooked some really nice food, played guitar hero, and cleaned the kitchen. I feel a lot better after spending time with them. I'm very worried about the international situation.&nbsp;&nbsp;</p>
     </div>
     <footer><p>
 
     <script>
-        const canvas = document.getElementById('digital-rain-canvas');
+        const canvas = document.getElementById('tunnel-canvas');
         const ctx = canvas.getContext('2d');
 
-        let fontSize = 16;
-        let columns;
-        let drops = [];
-        let frameCount = 0;
-        
-        const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()_+-=[]{}|;:",.<>?/`~';
+        let rings = [];
+        const numRings = 50; // More rings for a denser tunnel
+        const ringSpacing = 15;
 
-        function initializeRain() {
+        function setup() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            columns = Math.floor(canvas.width / fontSize);
-            drops = [];
-            for (let i = 0; i < columns; i++) {
-                drops[i] = Math.random() * canvas.height / fontSize; // Start drops at random y positions
+            rings = [];
+            for (let i = 0; i < numRings; i++) {
+                rings.push(new Ring((i * ringSpacing) % (numRings * ringSpacing)));
             }
         }
 
-        function drawRain() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        class Ring {
+            constructor(radius) {
+                this.radius = radius;
+                this.speed = 1.5;
+            }
 
-            ctx.font = fontSize + 'px ' + getComputedStyle(document.body).getPropertyValue('--font-primary');
-            ctx.textAlign = 'center';
-
-            const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim();
-
-            for (let i = 0; i < drops.length; i++) {
-                const text = characters.charAt(Math.floor(Math.random() * characters.length));
-                
-                // Fixed green color
-                ctx.fillStyle = accentColor;
-
-                // Glowing effect
-                ctx.shadowColor = accentColor;
-                ctx.shadowBlur = 10;
-
-                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-                
-                drops[i]+=1; // Increased speed for dynamic rain
-
-                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                    drops[i] = 0;
+            update() {
+                this.radius += this.speed;
+                // Reset ring when it grows large, creating a looping tunnel effect
+                if (this.radius > numRings * ringSpacing) {
+                    this.radius = 1;
                 }
             }
-            frameCount++;
+
+            draw(time) {
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                
+                const progress = this.radius / (numRings * ringSpacing);
+                const hue = (progress * 180 + time) % 360;
+                
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, this.radius, 0, Math.PI * 2);
+                
+                ctx.strokeStyle = `hsl(${hue}, 100%, 70%)`;
+                ctx.lineWidth = 1 + progress * 4; // Line gets thicker as it expands
+                
+                // Use a dashed line to give a text-like, stippled appearance
+                ctx.setLineDash([5, 10]);
+                ctx.stroke();
+            }
         }
 
+        let time = 0;
         function animate() {
-            drawRain();
+            // Use a solid, but slightly transparent background to create motion blur
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Sort rings so the largest are drawn first (in the back)
+            rings.sort((a, b) => b.radius - a.radius);
+
+            rings.forEach(ring => {
+                ring.update();
+                ring.draw(time);
+            });
+            
+            time++;
             requestAnimationFrame(animate);
         }
 
-        window.addEventListener('resize', initializeRain);
-        initializeRain();
+        window.addEventListener('resize', setup);
+        setup();
         animate();
     </script>
 </body>
