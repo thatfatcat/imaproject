@@ -4,149 +4,106 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Animation 37</title>
+    <title>Cosmic Drift</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #000000;
-            --main-text-color: #f0f0f0;
-            --accent-color: #ff00ff; /* Magenta */
-            --secondary-text-color: #ff99ff;
+            --background-color: #00000c;
+            --main-text-color: #e0e0e0;
+            --accent-color: #ff6ac1;
+            --secondary-text-color: #8892b0;
+            --star-color-1: #ffffff;
+            --star-color-2: #c0c0ff;
+            --star-color-3: #ffc0c0;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
         body, html {
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
-            overflow: hidden;
+            line-height: 1.6; overflow: hidden;
         }
-        #tunnel-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-        }
-        .container, footer {
-            position: relative;
-            z-index: 1;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 4vw;
-            min-height: 90vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-        h1 {
-            font-family: var(--font-display);
-            font-size: 3rem;
-            color: var(--accent-color);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: normal;
-            margin-bottom: 1.5rem;
-            text-shadow: 0 0 10px var(--accent-color);
-        }
-        p {
-            margin-bottom: 1.5rem;
-            width: 100%;
-            max-width: 600px;
-        }
-        footer {
-            text-align: center;
-            padding: 2rem 0;
-            font-size: 0.9rem;
-            color: var(--secondary-text-color);
-            margin-top: auto;
-            width: 100%;
-        }
+        #starfield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .container, footer { position: relative; z-index: 1; }
+        .container { max-width: 750px; margin: 0 auto; padding: 5vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        h1 { font-family: var(--font-display); font-size: 2.2rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 1.5rem 0; letter-spacing: 3px; font-weight: 700; text-shadow: 0 0 10px var(--accent-color); }
+        p { margin-bottom: 1.5rem; width: 100%; }
+        footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
+        @media (max-width: 768px) { h1 { font-size: 1.8rem; } }
     </style>
 </head>
 <body>
-    <canvas id="tunnel-canvas"></canvas>
+    <canvas id="starfield"></canvas>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <p>Therapist agrees with you that I should talk to Joanne. Sophie and Nicole came over today and they cooked some really nice food, played guitar hero, and cleaned the kitchen. I feel a lot better after spending time with them. I'm very worried about the international situation.&nbsp;&nbsp;</p>
+        <p>I didn't game much this weekend. Instead, I actually relaxed. I spent a lot of today on the lawn just looking at clouds. I'm glad I was able to do that for myself</p>
     </div>
-    <footer><p>
-
+    <footer></footer>
     <script>
-        const canvas = document.getElementById('tunnel-canvas');
+        const canvas = document.getElementById('starfield');
         const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        let rings = [];
-        const numRings = 50; // More rings for a denser tunnel
-        const ringSpacing = 15;
-
-        function setup() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            rings = [];
-            for (let i = 0; i < numRings; i++) {
-                rings.push(new Ring((i * ringSpacing) % (numRings * ringSpacing)));
-            }
-        }
-
-        class Ring {
-            constructor(radius) {
-                this.radius = radius;
-                this.speed = 1.5;
+        class Star {
+            constructor() {
+                this.x = Math.random() * canvas.width - canvas.width / 2;
+                this.y = Math.random() * canvas.height - canvas.height / 2;
+                this.z = Math.random() * canvas.width;
+                this.pz = this.z;
+                const colors = [getComputedStyle(document.body).getPropertyValue('--star-color-1').trim(), getComputedStyle(document.body).getPropertyValue('--star-color-2').trim(), getComputedStyle(document.body).getPropertyValue('--star-color-3').trim()];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
             }
 
             update() {
-                this.radius += this.speed;
-                // Reset ring when it grows large, creating a looping tunnel effect
-                if (this.radius > numRings * ringSpacing) {
-                    this.radius = 1;
+                this.z -= 5;
+                if (this.z < 1) {
+                    this.z = canvas.width;
+                    this.x = Math.random() * canvas.width - canvas.width / 2;
+                    this.y = Math.random() * canvas.height - canvas.height / 2;
+                    this.pz = this.z;
                 }
             }
 
-            draw(time) {
-                const centerX = canvas.width / 2;
-                const centerY = canvas.height / 2;
-                
-                const progress = this.radius / (numRings * ringSpacing);
-                const hue = (progress * 180 + time) % 360;
-                
+            draw() {
+                const sx = (this.x / this.z) * canvas.width / 2 + canvas.width / 2;
+                const sy = (this.y / this.z) * canvas.height / 2 + canvas.height / 2;
+                const r = Math.max(0.1, (1 - this.z / canvas.width) * 2.5);
+
+                const psx = (this.x / this.pz) * canvas.width / 2 + canvas.width / 2;
+                const psy = (this.y / this.pz) * canvas.height / 2 + canvas.height / 2;
+
                 ctx.beginPath();
-                ctx.arc(centerX, centerY, this.radius, 0, Math.PI * 2);
-                
-                ctx.strokeStyle = `hsl(${hue}, 100%, 70%)`;
-                ctx.lineWidth = 1 + progress * 4; // Line gets thicker as it expands
-                
-                // Use a dashed line to give a text-like, stippled appearance
-                ctx.setLineDash([5, 10]);
+                ctx.moveTo(psx, psy);
+                ctx.lineTo(sx, sy);
+                ctx.lineWidth = r;
+                ctx.strokeStyle = this.color;
                 ctx.stroke();
+
+                this.pz = this.z;
             }
         }
 
-        let time = 0;
+        const stars = Array.from({ length: 800 }, () => new Star());
+
         function animate() {
-            // Use a solid, but slightly transparent background to create motion blur
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--background-color').trim();
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Sort rings so the largest are drawn first (in the back)
-            rings.sort((a, b) => b.radius - a.radius);
-
-            rings.forEach(ring => {
-                ring.update();
-                ring.draw(time);
+            stars.forEach(star => {
+                star.update();
+                star.draw();
             });
-            
-            time++;
+
             requestAnimationFrame(animate);
         }
-
-        window.addEventListener('resize', setup);
-        setup();
+        
         animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
     </script>
 </body>
 </html>
