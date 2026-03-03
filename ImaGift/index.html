@@ -4,17 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Cosmic Drift</title>
+    <title>Digital Rain</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #00000c;
-            --main-text-color: #e0e0e0;
-            --accent-color: #ff6ac1;
-            --secondary-text-color: #8892b0;
-            --star-color-1: #ffffff;
-            --star-color-2: #c0c0ff;
-            --star-color-3: #ffc0c0;
+            --background-color: #0a0a14;
+            --main-text-color: #c0c0e0;
+            --accent-color: #40e0d0;
+            --secondary-text-color: #708090;
+            --rain-color-1: #3a86ff;
+            --rain-color-2: #4cc9f0;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
@@ -23,86 +22,75 @@
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             line-height: 1.6; overflow: hidden;
         }
-        #starfield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #rain-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
         .container { max-width: 750px; margin: 0 auto; padding: 5vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        h1 { font-family: var(--font-display); font-size: 2.2rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 1.5rem 0; letter-spacing: 3px; font-weight: 700; text-shadow: 0 0 10px var(--accent-color); }
+        h1 { font-family: var(--font-display); font-size: 2.4rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 1.5rem 0; letter-spacing: 2px; font-weight: normal; text-shadow: 0 0 8px var(--accent-color); }
         p { margin-bottom: 1.5rem; width: 100%; }
         footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
-        @media (max-width: 768px) { h1 { font-size: 1.8rem; } }
+        @media (max-width: 768px) { h1 { font-size: 2rem; } }
     </style>
 </head>
 <body>
-    <canvas id="starfield"></canvas>
+    <canvas id="rain-canvas"></canvas>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <p>I didn't game much this weekend. Instead, I actually relaxed. I spent a lot of today on the lawn just looking at clouds. I'm glad I was able to do that for myself</p>
+        <p>I got Sophie a book as a gift for helping me clean the house and being there for me. Thinking of other things to put in the gift box. Any suggestions?</p>
     </div>
-    <footer></footer>
+    <footer><p>Lael Kaganas Guralnik</p></footer>
     <script>
-        const canvas = document.getElementById('starfield');
+        const canvas = document.getElementById('rain-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        class Star {
-            constructor() {
-                this.x = Math.random() * canvas.width - canvas.width / 2;
-                this.y = Math.random() * canvas.height - canvas.height / 2;
-                this.z = Math.random() * canvas.width;
-                this.pz = this.z;
-                const colors = [getComputedStyle(document.body).getPropertyValue('--star-color-1').trim(), getComputedStyle(document.body).getPropertyValue('--star-color-2').trim(), getComputedStyle(document.body).getPropertyValue('--star-color-3').trim()];
-                this.color = colors[Math.floor(Math.random() * colors.length)];
-            }
+        const symbols = '0123456789ABCDEF';
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
 
-            update() {
-                this.z -= 5;
-                if (this.z < 1) {
-                    this.z = canvas.width;
-                    this.x = Math.random() * canvas.width - canvas.width / 2;
-                    this.y = Math.random() * canvas.height - canvas.height / 2;
-                    this.pz = this.z;
-                }
-            }
-
-            draw() {
-                const sx = (this.x / this.z) * canvas.width / 2 + canvas.width / 2;
-                const sy = (this.y / this.z) * canvas.height / 2 + canvas.height / 2;
-                const r = Math.max(0.1, (1 - this.z / canvas.width) * 2.5);
-
-                const psx = (this.x / this.pz) * canvas.width / 2 + canvas.width / 2;
-                const psy = (this.y / this.pz) * canvas.height / 2 + canvas.height / 2;
-
-                ctx.beginPath();
-                ctx.moveTo(psx, psy);
-                ctx.lineTo(sx, sy);
-                ctx.lineWidth = r;
-                ctx.strokeStyle = this.color;
-                ctx.stroke();
-
-                this.pz = this.z;
-            }
+        const drops = [];
+        for (let i = 0; i < columns; i++) {
+            drops[i] = 1;
         }
 
-        const stars = Array.from({ length: 800 }, () => new Star());
+        const rainColors = [getComputedStyle(document.body).getPropertyValue('--rain-color-1').trim(), getComputedStyle(document.body).getPropertyValue('--rain-color-2').trim()];
 
-        function animate() {
-            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--background-color').trim();
+        function draw() {
+            ctx.fillStyle = 'rgba(10, 10, 20, 0.1)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            stars.forEach(star => {
-                star.update();
-                star.draw();
-            });
+            ctx.font = fontSize + 'px ' + getComputedStyle(document.body).fontFamily;
 
+            for (let i = 0; i < drops.length; i++) {
+                const text = symbols[Math.floor(Math.random() * symbols.length)];
+                
+                // Alternate colors for a more dynamic effect
+                ctx.fillStyle = i % 2 === 0 ? rainColors[0] : rainColors[1];
+                
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        function animate() {
+            draw();
             requestAnimationFrame(animate);
         }
-        
-        animate();
+
+        // Use a slower interval for a more "rain-like" feel
+        setInterval(draw, 45);
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            // Re-initialize drops array
+            for (let i = 0; i < columns; i++) {
+                drops[i] = 1;
+            }
         });
     </script>
 </body>
