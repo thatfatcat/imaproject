@@ -4,94 +4,174 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Digital Rain</title>
+    <title>Tunnel Vision</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #0a0a14;
-            --main-text-color: #c0c0e0;
-            --accent-color: #40e0d0;
-            --secondary-text-color: #708090;
-            --rain-color-1: #3a86ff;
-            --rain-color-2: #4cc9f0;
+            --background-color: #000000;
+            --main-text-color: #b0c4de;
+            --accent-color: #3d8bff;
+            --secondary-text-color: #6a7380;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
         body, html {
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
-            line-height: 1.6; overflow: hidden;
+            overflow-y: auto;
         }
-        #rain-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
-        .container, footer { position: relative; z-index: 1; }
-        .container { max-width: 750px; margin: 0 auto; padding: 5vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        h1 { font-family: var(--font-display); font-size: 2.4rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 1.5rem 0; letter-spacing: 2px; font-weight: normal; text-shadow: 0 0 8px var(--accent-color); }
-        p { margin-bottom: 1.5rem; width: 100%; }
-        footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
-        @media (max-width: 768px) { h1 { font-size: 2rem; } }
+        #ascii-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        .container, footer {
+            position: relative;
+            z-index: 1;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4vw;
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        h1 {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: normal;
+        }
+        p {
+            margin-bottom: 1.5rem;
+            width: 100%;
+        }
+        .shake-text {
+            display: inline-block;
+            animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both infinite;
+            transform: translate3d(0, 0, 0);
+            backface-visibility: hidden;
+            perspective: 1000px;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .shake-less {
+            display: inline-block;
+            animation: shake-less 0.82s cubic-bezier(.36,.07,.19,.97) both infinite;
+            transform: translate3d(0, 0, 0);
+            backface-visibility: hidden;
+            perspective: 1000px;
+        }
+
+        @keyframes shake-less {
+            10%, 90% { transform: translate3d(-0.5px, 0, 0); }
+            20%, 80% { transform: translate3d(1px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-2px, 0, 0); }
+            40%, 60% { transform: translate3d(2px, 0, 0); }
+        }
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            font-size: 0.9rem;
+            color: var(--secondary-text-color);
+            margin-top: auto;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
-    <canvas id="rain-canvas"></canvas>
+    <canvas id="ascii-canvas"></canvas>
     <div class="container">
-        <h1>[Message_of_the_day]</h1>
-        <p>I got Sophie a book as a gift for helping me clean the house and being there for me. Thinking of other things to put in the gift box. Any suggestions?</p>
+        <h1>[Message_Of_The_Day]</h1>
+      <p>Today was national pancake day so I went to get free pancakes at ihop. Sophie joined me and there was a guy eating alone so we sat with him. He was from Jordan and we had a good time. There was only one server and one chef and the restaurant was completely packed. While we were waiting for a long time an old man walked up to our table and performed magic tricks for us.&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</p>
+      
     </div>
-    <footer><p>Lael Kaganas Guralnik</p></footer>
+    <footer><p>
+
     <script>
-        const canvas = document.getElementById('rain-canvas');
+        const canvas = document.getElementById('ascii-canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
 
-        const symbols = '0123456789ABCDEF';
-        const fontSize = 16;
-        const columns = canvas.width / fontSize;
+        let stars = [];
+        const chars = ['*', '.', '+', '`'];
+        const fontSize = 12;
 
-        const drops = [];
-        for (let i = 0; i < columns; i++) {
-            drops[i] = 1;
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            stars = [];
+            const starCount = (canvas.width * canvas.height) / 800;
+            for (let i = 0; i < starCount; i++) {
+                stars.push(new Star());
+            }
         }
 
-        const rainColors = [getComputedStyle(document.body).getPropertyValue('--rain-color-1').trim(), getComputedStyle(document.body).getPropertyValue('--rain-color-2').trim()];
+        class Star {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.char = chars[Math.floor(Math.random() * chars.length)];
+                this.alpha = Math.random();
+                this.fadeSpeed = Math.random() * 0.02 + 0.005;
+                this.fadingIn = true;
+            }
 
-        function draw() {
-            ctx.fillStyle = 'rgba(10, 10, 20, 0.1)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.font = fontSize + 'px ' + getComputedStyle(document.body).fontFamily;
-
-            for (let i = 0; i < drops.length; i++) {
-                const text = symbols[Math.floor(Math.random() * symbols.length)];
-                
-                // Alternate colors for a more dynamic effect
-                ctx.fillStyle = i % 2 === 0 ? rainColors[0] : rainColors[1];
-                
-                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                    drops[i] = 0;
+            update() {
+                if (this.fadingIn) {
+                    this.alpha += this.fadeSpeed;
+                    if (this.alpha >= 1) {
+                        this.alpha = 1;
+                        this.fadingIn = false;
+                    }
+                } else {
+                    this.alpha -= this.fadeSpeed;
+                    if (this.alpha <= 0) {
+                        this.reset();
+                    }
                 }
-                drops[i]++;
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.alpha = 0;
+                this.fadingIn = true;
+            }
+
+            draw() {
+                ctx.fillStyle = `rgba(176, 196, 222, ${this.alpha})`;
+                ctx.font = `${fontSize}px ${getComputedStyle(document.body).fontFamily}`;
+                ctx.fillText(this.char, this.x, this.y);
             }
         }
 
         function animate() {
-            draw();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            stars.forEach(star => {
+                star.update();
+                star.draw();
+            });
             requestAnimationFrame(animate);
         }
 
-        // Use a slower interval for a more "rain-like" feel
-        setInterval(draw, 45);
-
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            // Re-initialize drops array
-            for (let i = 0; i < columns; i++) {
-                drops[i] = 1;
-            }
-        });
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        animate();
     </script>
 </body>
 </html>
