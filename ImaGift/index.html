@@ -4,174 +4,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Tunnel Vision</title>
+    <title>Idle Thoughts</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #000000;
-            --main-text-color: #b0c4de;
-            --accent-color: #3d8bff;
-            --secondary-text-color: #6a7380;
+            --background-color: #1a1a2e;
+            --main-text-color: #dcdcdc;
+            --accent-color: #fca311;
+            --secondary-text-color: #8f8f9d;
+            --symbol-color: #fca311;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
         body, html {
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
-            overflow-y: auto;
+            line-height: 1.6; overflow: hidden;
         }
-        #ascii-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-        }
-        .container, footer {
-            position: relative;
-            z-index: 1;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 4vw;
-            min-height: 90vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-        h1 {
-            font-family: var(--font-display);
-            font-size: 3rem;
-            color: var(--accent-color);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: normal;
-        }
-        p {
-            margin-bottom: 1.5rem;
-            width: 100%;
-        }
-        .shake-text {
-            display: inline-block;
-            animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both infinite;
-            transform: translate3d(0, 0, 0);
-            backface-visibility: hidden;
-            perspective: 1000px;
-        }
-
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
-        }
-
-        .shake-less {
-            display: inline-block;
-            animation: shake-less 0.82s cubic-bezier(.36,.07,.19,.97) both infinite;
-            transform: translate3d(0, 0, 0);
-            backface-visibility: hidden;
-            perspective: 1000px;
-        }
-
-        @keyframes shake-less {
-            10%, 90% { transform: translate3d(-0.5px, 0, 0); }
-            20%, 80% { transform: translate3d(1px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-2px, 0, 0); }
-            40%, 60% { transform: translate3d(2px, 0, 0); }
-        }
-        footer {
-            text-align: center;
-            padding: 2rem 0;
-            font-size: 0.9rem;
-            color: var(--secondary-text-color);
-            margin-top: auto;
-            width: 100%;
-        }
+        #bouncer-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .container, footer { position: relative; z-index: 1; }
+        .container { max-width: 750px; margin: 0 auto; padding: 5vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        h1 { font-family: var(--font-display); font-size: 2.4rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 1.5rem 0; letter-spacing: 2px; font-weight: normal; }
+        p { margin-bottom: 1.5rem; width: 100%; }
+        footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
+        @media (max-width: 768px) { h1 { font-size: 2rem; } }
     </style>
 </head>
 <body>
-    <canvas id="ascii-canvas"></canvas>
+    <canvas id="bouncer-canvas"></canvas>
     <div class="container">
-        <h1>[Message_Of_The_Day]</h1>
-      <p>Today was national pancake day so I went to get free pancakes at ihop. Sophie joined me and there was a guy eating alone so we sat with him. He was from Jordan and we had a good time. There was only one server and one chef and the restaurant was completely packed. While we were waiting for a long time an old man walked up to our table and performed magic tricks for us.&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</p>
-      
+        <h1>[Message_of_the_day]</h1>
+        <p>I'm very excited for you guys to be here. It's my main driver right now to think about. I had a bad day today but I'll push through. I wish I liked myself more consistently.</p>
     </div>
-    <footer><p>
-
+    <footer></footer>
     <script>
-        const canvas = document.getElementById('ascii-canvas');
+        const canvas = document.getElementById('bouncer-canvas');
         const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        let stars = [];
-        const chars = ['*', '.', '+', '`'];
-        const fontSize = 12;
+        const symbol = ':)';
+        const fontSize = 30;
+        let x = 100;
+        let y = 100;
+        let dx = 2;
+        let dy = 2;
+        let hue = 0;
 
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            stars = [];
-            const starCount = (canvas.width * canvas.height) / 800;
-            for (let i = 0; i < starCount; i++) {
-                stars.push(new Star());
+        function draw() {
+            ctx.fillStyle = 'rgba(26, 26, 46, 0.25)'; // Fading effect
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.font = fontSize + 'px ' + getComputedStyle(document.body).getPropertyValue('--font-display');
+            
+            // Change color over time
+            const symbolColor = `hsl(${hue}, 100%, 70%)`;
+            ctx.fillStyle = symbolColor;
+            
+            ctx.fillText(symbol, x, y);
+
+            x += dx;
+            y += dy;
+
+            // Bounce off walls
+            if (x + ctx.measureText(symbol).width >= canvas.width || x <= 0) {
+                dx = -dx;
+                hue = (hue + 45) % 360; // Change color on bounce
             }
-        }
-
-        class Star {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.char = chars[Math.floor(Math.random() * chars.length)];
-                this.alpha = Math.random();
-                this.fadeSpeed = Math.random() * 0.02 + 0.005;
-                this.fadingIn = true;
-            }
-
-            update() {
-                if (this.fadingIn) {
-                    this.alpha += this.fadeSpeed;
-                    if (this.alpha >= 1) {
-                        this.alpha = 1;
-                        this.fadingIn = false;
-                    }
-                } else {
-                    this.alpha -= this.fadeSpeed;
-                    if (this.alpha <= 0) {
-                        this.reset();
-                    }
-                }
-            }
-
-            reset() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.alpha = 0;
-                this.fadingIn = true;
-            }
-
-            draw() {
-                ctx.fillStyle = `rgba(176, 196, 222, ${this.alpha})`;
-                ctx.font = `${fontSize}px ${getComputedStyle(document.body).fontFamily}`;
-                ctx.fillText(this.char, this.x, this.y);
+            if (y >= canvas.height || y - fontSize <= 0) {
+                dy = -dy;
+                hue = (hue + 45) % 360; // Change color on bounce
             }
         }
 
         function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            stars.forEach(star => {
-                star.update();
-                star.draw();
-            });
+            draw();
             requestAnimationFrame(animate);
         }
 
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
         animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
     </script>
 </body>
 </html>
