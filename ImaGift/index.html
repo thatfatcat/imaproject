@@ -4,15 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Idle Thoughts</title>
+    <title>Floating Lights</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #1a1a2e;
-            --main-text-color: #dcdcdc;
-            --accent-color: #fca311;
+            --background-color: #0d0d1a;
+            --main-text-color: #d0d0e0;
+            --accent-color: #aee9e0;
             --secondary-text-color: #8f8f9d;
-            --symbol-color: #fca311;
+            --orb-color-1: rgba(74, 144, 226, 0.7);
+            --orb-color-2: rgba(216, 122, 240, 0.7);
+            --orb-color-3: rgba(174, 233, 224, 0.7);
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
@@ -21,7 +23,7 @@
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             line-height: 1.6; overflow: hidden;
         }
-        #bouncer-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #orbs-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
         .container { max-width: 750px; margin: 0 auto; padding: 5vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         h1 { font-family: var(--font-display); font-size: 2.4rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 1.5rem 0; letter-spacing: 2px; font-weight: normal; }
@@ -31,55 +33,74 @@
     </style>
 </head>
 <body>
-    <canvas id="bouncer-canvas"></canvas>
+    <canvas id="orbs-canvas"></canvas>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <p>I'm very excited for you guys to be here. It's my main driver right now to think about. I had a bad day today but I'll push through. I wish I liked myself more consistently.</p>
+      <p>Trying to read the book the myth of sisyphus right now. Maybe I'll also get back into Yu-Gi-Oh. Working out everyday, staying away from bad habits like cigarettes. Not sure what will give me purpose at the moment.</p>
+        <p>&nbsp;</p>
     </div>
-    <footer></footer>
+    <footer><p>Lael Kaganas Guralnik</p></footer>
     <script>
-        const canvas = document.getElementById('bouncer-canvas');
+        const canvas = document.getElementById('orbs-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const symbol = ':)';
-        const fontSize = 30;
-        let x = 100;
-        let y = 100;
-        let dx = 2;
-        let dy = 2;
-        let hue = 0;
+        const orbColors = [
+            getComputedStyle(document.body).getPropertyValue('--orb-color-1').trim(),
+            getComputedStyle(document.body).getPropertyValue('--orb-color-2').trim(),
+            getComputedStyle(document.body).getPropertyValue('--orb-color-3').trim()
+        ];
 
-        function draw() {
-            ctx.fillStyle = 'rgba(26, 26, 46, 0.25)'; // Fading effect
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.font = fontSize + 'px ' + getComputedStyle(document.body).getPropertyValue('--font-display');
-            
-            // Change color over time
-            const symbolColor = `hsl(${hue}, 100%, 70%)`;
-            ctx.fillStyle = symbolColor;
-            
-            ctx.fillText(symbol, x, y);
-
-            x += dx;
-            y += dy;
-
-            // Bounce off walls
-            if (x + ctx.measureText(symbol).width >= canvas.width || x <= 0) {
-                dx = -dx;
-                hue = (hue + 45) % 360; // Change color on bounce
+        class Orb {
+            constructor() {
+                this.radius = Math.random() * 15 + 5;
+                this.x = Math.random() * (canvas.width - this.radius * 2) + this.radius;
+                this.y = Math.random() * (canvas.height - this.radius * 2) + this.radius;
+                this.dx = (Math.random() - 0.5) * 0.5;
+                this.dy = (Math.random() - 0.5) * 0.5;
+                this.color = orbColors[Math.floor(Math.random() * orbColors.length)];
             }
-            if (y >= canvas.height || y - fontSize <= 0) {
-                dy = -dy;
-                hue = (hue + 45) % 360; // Change color on bounce
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+                
+                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+                gradient.addColorStop(0, this.color.replace('0.7', '0.9'));
+                gradient.addColorStop(0.5, this.color.replace('0.7', '0.5'));
+                gradient.addColorStop(1, this.color.replace('0.7', '0'));
+                
+                ctx.fillStyle = gradient;
+                ctx.fill();
+            }
+
+            update() {
+                if (this.x + this.radius > canvas.width || this.x - this.radius < 0) {
+                    this.dx = -this.dx;
+                }
+                if (this.y + this.radius > canvas.height || this.y - this.radius < 0) {
+                    this.dy = -this.dy;
+                }
+                this.x += this.dx;
+                this.y += this.dy;
             }
         }
 
+        const orbs = [];
+        for (let i = 0; i < 30; i++) {
+            orbs.push(new Orb());
+        }
+
         function animate() {
-            draw();
             requestAnimationFrame(animate);
+            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--background-color').trim();
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            orbs.forEach(orb => {
+                orb.update();
+                orb.draw();
+            });
         }
 
         animate();
@@ -87,6 +108,11 @@
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            // Recreate orbs on resize to fit new screen dimensions
+            orbs.length = 0;
+            for (let i = 0; i < 30; i++) {
+                orbs.push(new Orb());
+            }
         });
     </script>
 </body>
