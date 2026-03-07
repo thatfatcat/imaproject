@@ -4,115 +4,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Floating Lights</title>
+    <title>Starlight Transmission</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #0d0d1a;
-            --main-text-color: #d0d0e0;
-            --accent-color: #aee9e0;
-            --secondary-text-color: #8f8f9d;
-            --orb-color-1: rgba(74, 144, 226, 0.7);
-            --orb-color-2: rgba(216, 122, 240, 0.7);
-            --orb-color-3: rgba(174, 233, 224, 0.7);
+            --background-color: #020305;
+            --main-text-color: #b0c4de;
+            --accent-color: #3d8bff;
+            --secondary-text-color: #6a7380;
+            --scanline-opacity: 0.05;
+            --noise-opacity: 0.03;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
         body, html {
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
-            line-height: 1.6; overflow: hidden;
+            line-height: 1.7; overflow: hidden;
+            background-image:
+                radial-gradient(ellipse at center, rgba(176, 196, 222, 0.03), transparent 80%),
+                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, var(--scanline-opacity)) 1px, rgba(255, 255, 255, var(--scanline-opacity)) 2px);
+            animation: noise 1s steps(2) infinite;
         }
-        #orbs-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        @keyframes noise {
+            0%, 100% { background-position: 0 0, 0 0; }
+            50% { background-position: 50% 50%, 10px 10px; }
+        }
+        #starfield-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
-        .container { max-width: 750px; margin: 0 auto; padding: 5vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        h1 { font-family: var(--font-display); font-size: 2.4rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 1.5rem 0; letter-spacing: 2px; font-weight: normal; }
+        .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
+        h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
         p { margin-bottom: 1.5rem; width: 100%; }
         footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
         @media (max-width: 768px) { h1 { font-size: 2rem; } }
     </style>
 </head>
 <body>
-    <canvas id="orbs-canvas"></canvas>
+    <canvas id="starfield-canvas"></canvas>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-      <p>Trying to read the book the myth of sisyphus right now. Maybe I'll also get back into Yu-Gi-Oh. Working out everyday, staying away from bad habits like cigarettes. Not sure what will give me purpose at the moment.</p>
-        <p>&nbsp;</p>
+        <p>What do you think is humanities most important invention? I have a few candidates but I'm not sure.&nbsp; &nbsp;</p>
     </div>
-    <footer><p>Lael Kaganas Guralnik</p></footer>
+    <footer></footer>
     <script>
-        const canvas = document.getElementById('orbs-canvas');
+        const canvas = document.getElementById('starfield-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const orbColors = [
-            getComputedStyle(document.body).getPropertyValue('--orb-color-1').trim(),
-            getComputedStyle(document.body).getPropertyValue('--orb-color-2').trim(),
-            getComputedStyle(document.body).getPropertyValue('--orb-color-3').trim()
-        ];
+        const stars = [];
+        const numStars = 800;
 
-        class Orb {
-            constructor() {
-                this.radius = Math.random() * 15 + 5;
-                this.x = Math.random() * (canvas.width - this.radius * 2) + this.radius;
-                this.y = Math.random() * (canvas.height - this.radius * 2) + this.radius;
-                this.dx = (Math.random() - 0.5) * 0.5;
-                this.dy = (Math.random() - 0.5) * 0.5;
-                this.color = orbColors[Math.floor(Math.random() * orbColors.length)];
-            }
-
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-                
-                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
-                gradient.addColorStop(0, this.color.replace('0.7', '0.9'));
-                gradient.addColorStop(0.5, this.color.replace('0.7', '0.5'));
-                gradient.addColorStop(1, this.color.replace('0.7', '0'));
-                
-                ctx.fillStyle = gradient;
-                ctx.fill();
-            }
-
-            update() {
-                if (this.x + this.radius > canvas.width || this.x - this.radius < 0) {
-                    this.dx = -this.dx;
-                }
-                if (this.y + this.radius > canvas.height || this.y - this.radius < 0) {
-                    this.dy = -this.dy;
-                }
-                this.x += this.dx;
-                this.y += this.dy;
-            }
-        }
-
-        const orbs = [];
-        for (let i = 0; i < 30; i++) {
-            orbs.push(new Orb());
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--background-color').trim();
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            orbs.forEach(orb => {
-                orb.update();
-                orb.draw();
+        for (let i = 0; i < numStars; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                z: Math.random() * canvas.width,
+                size: Math.random() * 2 + 1,
             });
         }
 
+        function animate() {
+            ctx.fillStyle = 'rgba(2, 3, 5, 0.15)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = 'rgba(176, 196, 222, 0.8)';
+            
+            for (let i = 0; i < numStars; i++) {
+                const star = stars[i];
+                star.z -= 1;
+
+                if (star.z <= 0) {
+                    star.z = canvas.width;
+                    star.x = Math.random() * canvas.width;
+                    star.y = Math.random() * canvas.height;
+                }
+
+                const x = (star.x - canvas.width / 2) * (canvas.width / star.z) + canvas.width / 2;
+                const y = (star.y - canvas.height / 2) * (canvas.width / star.z) + canvas.height / 2;
+                const radius = star.size * (canvas.width / star.z);
+
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            requestAnimationFrame(animate);
+        }
+        
         animate();
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            // Recreate orbs on resize to fit new screen dimensions
-            orbs.length = 0;
-            for (let i = 0; i < 30; i++) {
-                orbs.push(new Orb());
-            }
         });
     </script>
 </body>
