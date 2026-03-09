@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Digital Flow</title>
+    <title>Dynamic Network</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -30,7 +30,7 @@
             0%, 100% { background-position: 0 0, 0 0; }
             50% { background-position: 50% 50%, 10px 10px; }
         }
-        #lines-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #dots-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
         .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
         h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
@@ -40,63 +40,62 @@
     </style>
 </head>
 <body>
-    <canvas id="lines-canvas"></canvas>
+    <canvas id="dots-canvas"></canvas>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <p>I've decided to compete in Yu Gi Oh again, I'm buying some cards and studying the current game.&nbsp; &nbsp; &nbsp;&nbsp;</p>
+      <p>Summarization: I should focus on myself and be less of a workaholic for the time being, while still being a good employee.&nbsp;</p>
+        <p>I hope I start feeling better soon.&nbsp;</p>
     </div>
     <footer></footer>
     <script>
-        const canvas = document.getElementById('lines-canvas');
+        const canvas = document.getElementById('dots-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const lines = [];
-        const numLines = 50;
-        const lineColor = 'rgba(61, 139, 255, 0.7)'; // Accent color with some transparency
-        const lineLength = 50; // Length of each line segment
-        const speed = 2; // Speed of lines moving downwards
+        const dots = [];
+        const numDots = 30;
+        const dotRadius = 4;
+        const dotColor = 'rgba(61, 139, 255, 0.8)'; // Accent color with some transparency
 
-        function Line() {
+        function Dot() {
             this.x = Math.random() * canvas.width;
             this.y = Math.random() * canvas.height;
-            this.length = Math.random() * lineLength + 20; // Random length for variation
-            this.speed = Math.random() * speed + 0.5; // Random speed for variation
-            this.opacity = Math.random() * 0.8 + 0.2; // Random opacity
+            this.dx = (Math.random() - 0.5) * 4; // Horizontal speed
+            this.dy = (Math.random() - 0.5) * 4; // Vertical speed
         }
 
-        Line.prototype.draw = function() {
+        Dot.prototype.draw = function() {
             ctx.beginPath();
-            ctx.moveTo(this.x, this.y);
-            ctx.lineTo(this.x, this.y + this.length);
-            ctx.strokeStyle = `rgba(61, 139, 255, ${this.opacity})`;
-            ctx.lineWidth = 1;
-            ctx.stroke();
+            ctx.arc(this.x, this.y, dotRadius, 0, Math.PI * 2);
+            ctx.fillStyle = dotColor;
+            ctx.fill();
         };
 
-        Line.prototype.update = function() {
-            this.y += this.speed;
-            if (this.y > canvas.height) {
-                this.y = -this.length; // Reset line to top when it goes off screen
-                this.x = Math.random() * canvas.width; // New random x position
-                this.length = Math.random() * lineLength + 20;
-                this.speed = Math.random() * speed + 0.5;
-                this.opacity = Math.random() * 0.8 + 0.2;
+        Dot.prototype.update = function() {
+            this.x += this.dx;
+            this.y += this.dy;
+
+            // Bounce off walls
+            if (this.x + dotRadius > canvas.width || this.x - dotRadius < 0) {
+                this.dx *= -1;
+            }
+            if (this.y + dotRadius > canvas.height || this.y - dotRadius < 0) {
+                this.dy *= -1;
             }
         };
 
-        for (let i = 0; i < numLines; i++) {
-            lines.push(new Line());
+        for (let i = 0; i < numDots; i++) {
+            dots.push(new Dot());
         }
 
         function animate() {
             ctx.fillStyle = 'rgba(2, 3, 5, 0.1)'; // Clear with a slight fade
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            lines.forEach(line => {
-                line.update();
-                line.draw();
+            dots.forEach(dot => {
+                dot.update();
+                dot.draw();
             });
 
             requestAnimationFrame(animate);
@@ -107,11 +106,7 @@
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            // Re-initialize lines or adjust their positions if needed on resize
-            lines.forEach(line => {
-                line.x = Math.random() * canvas.width;
-                line.y = Math.random() * canvas.height;
-            });
+            // No need to reset dot positions, they will adjust to new boundaries
         });
     </script>
 </body>
