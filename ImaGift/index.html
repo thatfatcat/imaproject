@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Dimensional Nexus</title>
+    <title>Nebula Flow</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -43,12 +43,15 @@
     <div id="three-canvas"></div>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <p>Went on a date online today with a girl. We played video games together and joked around. Therapist thinks im ready to date.&nbsp;</p>
+        <p>I posted a video of me burning my armpit hair but then I chickened out and deleted the post. I wish I could repost it now but 5 people saw it and theyll know im reposting. Or maybe it's just best that the video stays offline. Sorry I don't have much more substance to write about i spent the whole day doing chores.&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</p>
     </div>
     <footer></footer>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        let scene, camera, renderer, shape, stars;
+        let scene, camera, renderer, ribbon;
+        let count = 0;
+        const numParticles = 500;
+        const pathLength = 50;
 
         function init() {
             // Scene
@@ -56,45 +59,60 @@
 
             // Camera
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 5;
+            camera.position.z = 300;
 
             // Renderer
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setClearColor(0x000000, 0); // Transparent background
+            renderer.setClearColor(0x000000, 0);
             document.getElementById('three-canvas').appendChild(renderer.domElement);
 
-            // Main Shape
-            const geometry = new THREE.IcosahedronGeometry(1, 0);
-            const material = new THREE.MeshBasicMaterial({ color: 0x3d8bff, wireframe: true });
-            shape = new THREE.Mesh(geometry, material);
-            scene.add(shape);
-
-            // Background Stars
-            const starGeometry = new THREE.BufferGeometry();
-            const starVertices = [];
-            for (let i = 0; i < 10000; i++) {
-                const x = (Math.random() - 0.5) * 2000;
-                const y = (Math.random() - 0.5) * 2000;
-                const z = (Math.random() - 0.5) * 2000;
-                starVertices.push(x, y, z);
+            // Ribbon
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(numParticles * 3);
+            const colors = new Float32Array(numParticles * 3);
+            
+            for (let i = 0; i < numParticles; i++) {
+                positions[i * 3] = (i / numParticles) * pathLength - pathLength / 2;
+                positions[i * 3 + 1] = 0;
+                positions[i * 3 + 2] = 0;
+                
+                const color = new THREE.Color(`hsl(${ (i / numParticles) * 100 + 180 }, 70%, 50%)`);
+                colors[i * 3] = color.r;
+                colors[i * 3 + 1] = color.g;
+                colors[i * 3 + 2] = color.b;
             }
-            starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
-            const starMaterial = new THREE.PointsMaterial({ color: 0xb0c4de, size: 0.7 });
-            stars = new THREE.Points(starGeometry, starMaterial);
-            scene.add(stars);
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 2,
+                vertexColors: true,
+                blending: THREE.AdditiveBlending,
+                transparent: true,
+            });
+            ribbon = new THREE.Points(geometry, material);
+            scene.add(ribbon);
         }
 
         function animate() {
             requestAnimationFrame(animate);
 
-            // Animate shape
-            shape.rotation.x += 0.005;
-            shape.rotation.y += 0.005;
+            const positions = ribbon.geometry.attributes.position.array;
+            
+            for (let i = 0; i < numParticles; i++) {
+                const y = 30 * Math.sin( (i * 0.1) + count );
+                const z = 30 * Math.cos( (i * 0.05) + count );
+                positions[i * 3 + 1] = y;
+                positions[i * 3 + 2] = z;
+            }
 
-            // Animate stars
-            stars.rotation.x += 0.0001;
-            stars.rotation.y += 0.0001;
+            ribbon.geometry.attributes.position.needsUpdate = true;
+            ribbon.rotation.x += 0.001;
+            ribbon.rotation.y += 0.002;
+
+            count += 0.05;
 
             renderer.render(scene, camera);
         }
