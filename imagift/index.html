@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Nebula Flow</title>
+    <title>Dimensional Tunnel</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -43,15 +43,15 @@
     <div id="three-canvas"></div>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <p>I posted a video of me burning my armpit hair but then I chickened out and deleted the post. I wish I could repost it now but 5 people saw it and theyll know im reposting. Or maybe it's just best that the video stays offline. Sorry I don't have much more substance to write about i spent the whole day doing chores.&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</p>
+        <p>Hung out with sophie and nicole for dinner. Nicole is leaving on saturday and idk what ill do when shes gone im going to miss her so much.&nbsp;</p>
     </div>
     <footer></footer>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        let scene, camera, renderer, ribbon;
-        let count = 0;
-        const numParticles = 500;
-        const pathLength = 50;
+        let scene, camera, renderer, rings = [];
+        const numRings = 20;
+        const ringSpacing = 20;
+        const ringRadius = 50;
 
         function init() {
             // Scene
@@ -59,7 +59,7 @@
 
             // Camera
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 300;
+            camera.position.set(0, 0, 0); // Start at the beginning of the tunnel
 
             // Renderer
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -67,52 +67,29 @@
             renderer.setClearColor(0x000000, 0);
             document.getElementById('three-canvas').appendChild(renderer.domElement);
 
-            // Ribbon
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(numParticles * 3);
-            const colors = new Float32Array(numParticles * 3);
-            
-            for (let i = 0; i < numParticles; i++) {
-                positions[i * 3] = (i / numParticles) * pathLength - pathLength / 2;
-                positions[i * 3 + 1] = 0;
-                positions[i * 3 + 2] = 0;
-                
-                const color = new THREE.Color(`hsl(${ (i / numParticles) * 100 + 180 }, 70%, 50%)`);
-                colors[i * 3] = color.r;
-                colors[i * 3 + 1] = color.g;
-                colors[i * 3 + 2] = color.b;
+            // Create rings
+            for (let i = 0; i < numRings; i++) {
+                const geometry = new THREE.RingGeometry(ringRadius - 2, ringRadius, 64);
+                const material = new THREE.MeshBasicMaterial({ color: 0x3d8bff, side: THREE.DoubleSide });
+                const ring = new THREE.Mesh(geometry, material);
+                ring.position.z = -i * ringSpacing; // Position rings along z-axis
+                rings.push(ring);
+                scene.add(ring);
             }
-
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-            const material = new THREE.PointsMaterial({
-                size: 2,
-                vertexColors: true,
-                blending: THREE.AdditiveBlending,
-                transparent: true,
-            });
-            ribbon = new THREE.Points(geometry, material);
-            scene.add(ribbon);
         }
 
         function animate() {
             requestAnimationFrame(animate);
 
-            const positions = ribbon.geometry.attributes.position.array;
-            
-            for (let i = 0; i < numParticles; i++) {
-                const y = 30 * Math.sin( (i * 0.1) + count );
-                const z = 30 * Math.cos( (i * 0.05) + count );
-                positions[i * 3 + 1] = y;
-                positions[i * 3 + 2] = z;
-            }
+            // Move camera forward, creating tunnel illusion
+            camera.position.z -= 0.5;
 
-            ribbon.geometry.attributes.position.needsUpdate = true;
-            ribbon.rotation.x += 0.001;
-            ribbon.rotation.y += 0.002;
-
-            count += 0.05;
+            // Loop rings when they pass the camera
+            rings.forEach(ring => {
+                if (ring.position.z > camera.position.z) {
+                    ring.position.z -= numRings * ringSpacing;
+                }
+            });
 
             renderer.render(scene, camera);
         }
