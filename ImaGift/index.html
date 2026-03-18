@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Dimensional Tunnel</title>
+    <title>Procedural Landscape</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -43,15 +43,15 @@
     <div id="three-canvas"></div>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <p>Hung out with sophie and nicole for dinner. Nicole is leaving on saturday and idk what ill do when shes gone im going to miss her so much.&nbsp;</p>
+        <p>Today was my most productive day at work I think since I started. Both my boss and his boss weren't there and I forgot my earphones at home. There was so much to do too. Hopefully more days like that to come.&nbsp; &nbsp; &nbsp;</p>
     </div>
     <footer></footer>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
     <script>
-        let scene, camera, renderer, rings = [];
-        const numRings = 20;
-        const ringSpacing = 20;
-        const ringRadius = 50;
+        let scene, camera, renderer, plane;
+        const simplex = new SimplexNoise();
+        let time = 0;
 
         function init() {
             // Scene
@@ -59,37 +59,39 @@
 
             // Camera
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 0, 0); // Start at the beginning of the tunnel
+            camera.position.set(0, 50, 100);
+            camera.lookAt(scene.position);
 
             // Renderer
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setClearColor(0x000000, 0);
             document.getElementById('three-canvas').appendChild(renderer.domElement);
-
-            // Create rings
-            for (let i = 0; i < numRings; i++) {
-                const geometry = new THREE.RingGeometry(ringRadius - 2, ringRadius, 64);
-                const material = new THREE.MeshBasicMaterial({ color: 0x3d8bff, side: THREE.DoubleSide });
-                const ring = new THREE.Mesh(geometry, material);
-                ring.position.z = -i * ringSpacing; // Position rings along z-axis
-                rings.push(ring);
-                scene.add(ring);
-            }
+            
+            // Plane geometry
+            const geometry = new THREE.PlaneGeometry(500, 500, 100, 100);
+            const material = new THREE.MeshBasicMaterial({ color: 0x3d8bff, wireframe: true });
+            plane = new THREE.Mesh(geometry, material);
+            plane.rotation.x = -Math.PI / 2; // Rotate to be horizontal
+            scene.add(plane);
         }
 
         function animate() {
             requestAnimationFrame(animate);
 
-            // Move camera forward, creating tunnel illusion
-            camera.position.z -= 0.5;
+            // Animate terrain
+            const vertices = plane.geometry.attributes.position.array;
+            const noiseFactor = 0.1;
+            const heightFactor = 20;
+            for (let i = 0; i < vertices.length; i += 3) {
+                const x = vertices[i];
+                const y = vertices[i + 1];
+                const noise = simplex.noise3D(x * noiseFactor, y * noiseFactor, time);
+                vertices[i + 2] = noise * heightFactor;
+            }
+            plane.geometry.attributes.position.needsUpdate = true;
 
-            // Loop rings when they pass the camera
-            rings.forEach(ring => {
-                if (ring.position.z > camera.position.z) {
-                    ring.position.z -= numRings * ringSpacing;
-                }
-            });
+            time += 0.01;
 
             renderer.render(scene, camera);
         }
