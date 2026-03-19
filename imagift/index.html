@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Procedural Landscape</title>
+    <title>Interactive Particle Field</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -43,15 +43,13 @@
     <div id="three-canvas"></div>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <p>Today was my most productive day at work I think since I started. Both my boss and his boss weren't there and I forgot my earphones at home. There was so much to do too. Hopefully more days like that to come.&nbsp; &nbsp; &nbsp;</p>
+        <p>I have to tell you guys more about the girl I'm talking to. I'm seeing her on Sunday to watch project hail mary. I have a plan of a cool gift to make her and I'm hoping ill have time to do so.&nbsp;&nbsp;</p>
     </div>
     <footer></footer>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
     <script>
-        let scene, camera, renderer, plane;
-        const simplex = new SimplexNoise();
-        let time = 0;
+        let scene, camera, renderer, particles;
+        const mouse = new THREE.Vector2();
 
         function init() {
             // Scene
@@ -59,39 +57,67 @@
 
             // Camera
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 50, 100);
-            camera.lookAt(scene.position);
+            camera.position.z = 300;
 
             // Renderer
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setClearColor(0x000000, 0);
             document.getElementById('three-canvas').appendChild(renderer.domElement);
+
+            // Particles
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            for (let i = 0; i < 5000; i++) {
+                const x = (Math.random() - 0.5) * 1000;
+                const y = (Math.random() - 0.5) * 1000;
+                const z = (Math.random() - 0.5) * 1000;
+                vertices.push(x, y, z);
+            }
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
             
-            // Plane geometry
-            const geometry = new THREE.PlaneGeometry(500, 500, 100, 100);
-            const material = new THREE.MeshBasicMaterial({ color: 0x3d8bff, wireframe: true });
-            plane = new THREE.Mesh(geometry, material);
-            plane.rotation.x = -Math.PI / 2; // Rotate to be horizontal
-            scene.add(plane);
+            const material = new THREE.PointsMaterial({
+                color: 0x3d8bff,
+                size: 2,
+                blending: THREE.AdditiveBlending,
+                transparent: true
+            });
+            particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+
+            // Mouse listener
+            document.addEventListener('mousemove', onMouseMove, false);
+        }
+
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
         }
 
         function animate() {
             requestAnimationFrame(animate);
+            
+            // Interaction logic
+            const positions = particles.geometry.attributes.position.array;
+            const force = 100;
+            const mouse3D = new THREE.Vector3(mouse.x * (window.innerWidth/2), mouse.y * (window.innerHeight/2), 0);
+            camera.localToWorld(mouse3D);
 
-            // Animate terrain
-            const vertices = plane.geometry.attributes.position.array;
-            const noiseFactor = 0.1;
-            const heightFactor = 20;
-            for (let i = 0; i < vertices.length; i += 3) {
-                const x = vertices[i];
-                const y = vertices[i + 1];
-                const noise = simplex.noise3D(x * noiseFactor, y * noiseFactor, time);
-                vertices[i + 2] = noise * heightFactor;
+
+            for (let i = 0; i < positions.length; i += 3) {
+                const particle = new THREE.Vector3(positions[i], positions[i+1], positions[i+2]);
+                const distance = particle.distanceTo(mouse3D);
+                
+                if (distance < force) {
+                    const direction = particle.sub(mouse3D).normalize();
+                    positions[i] += direction.x * (force - distance) * 0.1;
+                    positions[i+1] += direction.y * (force - distance) * 0.1;
+                }
             }
-            plane.geometry.attributes.position.needsUpdate = true;
-
-            time += 0.01;
+            particles.geometry.attributes.position.needsUpdate = true;
+            
+            // Scene rotation
+            scene.rotation.y += 0.0005;
 
             renderer.render(scene, camera);
         }
