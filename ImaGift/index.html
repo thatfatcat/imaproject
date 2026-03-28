@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>System Scan</title>
+    <title>Retro-Wave Grid</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
             --background-color: #020305;
             --main-text-color: #b0c4de;
-            --accent-color: #3d8bff;
-            --secondary-text-color: #6a7380;
+            --accent-color: #ff00ff; /* Neon Pink for retro-wave */
+            --secondary-text-color: #00ffff; /* Neon Cyan for retro-wave */
             --scanline-opacity: 0.05;
             --noise-opacity: 0.03;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
@@ -30,7 +30,7 @@
             0%, 100% { background-position: 0 0, 0 0; }
             50% { background-position: 50% 50%, 10px 10px; }
         }
-        #scan-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #three-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
         .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
         h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
@@ -40,78 +40,79 @@
     </style>
 </head>
 <body>
-    <canvas id="scan-canvas"></canvas>
+    <div id="three-canvas"></div>
     <div class="container">
-        <h1>[Message_of_the_day]</h1>
-        <p>Cleaned so much of the house today, but there's still a lot to do. Taking tomorrow off too.</p> <p>Silly question for yall: Would you raher have the ability to teleport, or the ability to rewind time? What would be your most important applications for these powers?</p>
+        <h1>[message_of_the_day]</h1>
+        <p>I cleaned a bit of the house but really struggled mopping. I wish I had more time to simply do what I want to so I could learn more of these adult skills. I called off two days in a row. I think its good for my mental health but I'm also very low on sick and personal time off. Just some updates i guess. &nbsp;</p>
     </div>
     <footer></footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        const canvas = document.getElementById('scan-canvas');
-        const ctx = canvas.getContext('2d');
+        let scene, camera, renderer, grid, stars;
+        let animateCamera = true;
 
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:",.<>/?`~ ';
-        const fontSize = 12;
-        let cols;
-        let rows;
-        let charGrid;
+        function init() {
+            // Scene
+            scene = new THREE.Scene();
 
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            cols = Math.floor(canvas.width / fontSize);
-            rows = Math.floor(canvas.height / fontSize);
-            charGrid = Array(cols * rows).fill(0).map(() => ({
-                char: chars[Math.floor(Math.random() * chars.length)],
-                opacity: 0,
-                targetOpacity: Math.random(),
-                fadeSpeed: Math.random() * 0.05 + 0.01,
-                delay: Math.random() * 100
-            }));
-            ctx.font = `${fontSize}px 'VT323', monospace`;
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
+            // Camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 50, 0); // Position above the grid, slightly back
+            camera.rotation.x = -Math.PI / 4; // Look down into the grid
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0);
+            document.getElementById('three-canvas').appendChild(renderer.domElement);
+
+            // Grid
+            const divisions = 50;
+            const size = 1000;
+            const gridHelper = new THREE.GridHelper(size, divisions, 0x00ffff, 0x800080); // Cyan and Purple
+            gridHelper.material.opacity = 0.6;
+            gridHelper.material.transparent = true;
+            gridHelper.position.y = 0; // Set the grid to start at Y=0
+            scene.add(gridHelper);
+
+            // Background Stars
+            const starGeometry = new THREE.BufferGeometry();
+            const starVertices = [];
+            for (let i = 0; i < 5000; i++) {
+                const x = (Math.random() - 0.5) * 2000;
+                const y = (Math.random() - 0.5) * 2000;
+                const z = (Math.random() - 0.5) * 2000;
+                starVertices.push(x, y, z);
+            }
+            starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+            const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.7 });
+            stars = new THREE.Points(starGeometry, starMaterial);
+            scene.add(stars);
         }
 
         function animate() {
-            ctx.fillStyle = 'rgba(2, 3, 5, 0.08)'; // Clear with a slight fade
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            requestAnimationFrame(animate);
 
-            for (let i = 0; i < charGrid.length; i++) {
-                const charData = charGrid[i];
-                const x = (i % cols) * fontSize;
-                const y = Math.floor(i / cols) * fontSize;
+            if (animateCamera) {
+                camera.position.z -= 0.5; // Move camera forward
 
-                if (charData.delay > 0) {
-                    charData.delay--;
-                    continue;
+                // Loop the camera to create an infinite effect
+                if (camera.position.z < -200) { // Adjust this value based on grid size and desired loop point
+                    camera.position.z = 200;
                 }
-
-                if (charData.opacity < charData.targetOpacity) {
-                    charData.opacity += charData.fadeSpeed;
-                    if (charData.opacity > charData.targetOpacity) charData.opacity = charData.targetOpacity;
-                } else if (charData.opacity > charData.targetOpacity) {
-                    charData.opacity -= charData.fadeSpeed;
-                    if (charData.opacity < charData.targetOpacity) charData.opacity = charData.targetOpacity;
-                }
-
-                // Randomly change characters and target opacity for dynamic effect
-                if (Math.random() < 0.005) { // Small chance to trigger change
-                    charData.char = chars[Math.floor(Math.random() * chars.length)];
-                    charData.targetOpacity = Math.random() * 0.3; // Less bright
-                    charData.fadeSpeed = Math.random() * 0.05 + 0.01;
-                }
-
-                ctx.fillStyle = `rgba(0, 50, 0, ${charData.opacity})`; // Darker green color
-                ctx.fillText(charData.char, x, y);
             }
 
-            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
         }
 
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas(); // Initial setup
+        init();
         animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
