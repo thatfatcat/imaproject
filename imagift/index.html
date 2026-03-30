@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Organic Flow</title>
+    <title>Cosmic Vortex</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -30,7 +30,7 @@
             0%, 100% { background-position: 0 0, 0 0; }
             50% { background-position: 50% 50%, 10px 10px; }
         }
-        #fluid-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #galaxy-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
         .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
         h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
@@ -40,102 +40,97 @@
     </style>
 </head>
 <body>
-    <canvas id="fluid-canvas"></canvas>
+    <canvas id="galaxy-canvas"></canvas>
     <div class="container">
-        <h1>[message_of_the_day]</h1>
-        <p>Having a date right now with Sarah! It's goingreally well and were having a good time. Also excited for the party tomorrow and for you guys to visit soon.&nbsp;</p>
+        <h1>[Message_of_the_day]</h1>
+        <p>The date went really well. Sarah ended up staying close to when the party was, so she got to meet Sophie and West. Her and Sophie got along very well and she invited Sophie to her birthday party (obviously I'm also invited). I still get the urge to self-sabotage sometimes but when I think about it its not very rational. The party went good too. Arty said it was their best birthday ever. I also called Safta and will call her tomorrow too. Hopefully I don't feel awful at work tomorrow. For missing so many days.&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;</p>
     </div>
     <footer></footer>
     <script>
-        const canvas = document.getElementById('fluid-canvas');
+        const canvas = document.getElementById('galaxy-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const metaballs = [];
-        const numMetaballs = 10;
-        const maxRadius = 50;
-        const minRadius = 20;
+        const particles = [];
+        const numParticles = 2000; // Increased for a denser ASCII effect
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:",.<>/?`~ ';
+        const asciiFontSize = 12;
+        
+        let centerX, centerY;
 
-        class Metaball {
+        class Particle {
             constructor() {
                 this.x = Math.random() * canvas.width;
                 this.y = Math.random() * canvas.height;
-                this.radius = Math.random() * (maxRadius - minRadius) + minRadius;
-                this.vx = (Math.random() - 0.5) * 2;
-                this.vy = (Math.random() - 0.5) * 2;
-                this.color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                this.vx = (Math.random() - 0.5) * 1; // Initial random velocity
+                this.vy = (Math.random() - 0.5) * 1;
+                this.char = chars[Math.floor(Math.random() * chars.length)];
+                this.opacity = Math.random() * 0.4 + 0.1; // Dimmer opacity
+                this.color = `rgba(0, 80, 0, ${this.opacity})`; // Dim green
+                this.size = Math.random() * 0.8 + 0.2; // Use for speed variation
             }
 
             update() {
+                // Apply a subtle pull towards the center to create a swirling effect
+                const dx = centerX - this.x;
+                const dy = centerY - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                // Rotational force component (swirl)
+                this.vx += (dy / dist) * 0.005 * this.size;
+                this.vy += (-dx / dist) * 0.005 * this.size;
+
+                // Dampen velocity to prevent infinite acceleration
+                this.vx *= 0.99;
+                this.vy *= 0.99;
+
                 this.x += this.vx;
                 this.y += this.vy;
 
-                if (this.x + this.radius > canvas.width || this.x - this.radius < 0) {
-                    this.vx *= -1;
-                }
-                if (this.y + this.radius > canvas.height || this.y - this.radius < 0) {
-                    this.vy *= -1;
-                }
+                // Wrap around edges
+                if (this.x < -asciiFontSize) this.x = canvas.width;
+                if (this.x > canvas.width + asciiFontSize) this.x = -asciiFontSize;
+                if (this.y < -asciiFontSize) this.y = canvas.height;
+                if (this.y > canvas.height + asciiFontSize) this.y = -asciiFontSize;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillText(this.char, this.x, this.y);
             }
         }
 
-        for (let i = 0; i < numMetaballs; i++) {
-            metaballs.push(new Metaball());
-        }
-
-        function drawMetaballs() {
-            // Create an off-screen canvas for rendering metaballs
-            const offscreenCanvas = document.createElement('canvas');
-            offscreenCanvas.width = canvas.width;
-            offscreenCanvas.height = canvas.height;
-            const offscreenCtx = offscreenCanvas.getContext('2d');
-
-            // Draw each metaball with a radial gradient
-            metaballs.forEach(mb => {
-                const gradient = offscreenCtx.createRadialGradient(mb.x, mb.y, 0, mb.x, mb.y, mb.radius);
-                gradient.addColorStop(0, `rgba(61, 139, 255, 0.8)`); // Core
-                gradient.addColorStop(0.7, `rgba(61, 139, 255, 0.4)`); // Outer blur
-                gradient.addColorStop(1, `rgba(61, 139, 255, 0)`); // Fully transparent
-                
-                offscreenCtx.fillStyle = gradient;
-                offscreenCtx.beginPath();
-                offscreenCtx.arc(mb.x, mb.y, mb.radius, 0, Math.PI * 2);
-                offscreenCtx.fill();
-            });
-
-            // Apply blur and blending to create the metaball effect
-            ctx.filter = `blur(15px)`;
-            ctx.drawImage(offscreenCanvas, 0, 0);
-            ctx.filter = 'none';
-
-            // Draw a second pass with solid color to make them more opaque
-            ctx.globalCompositeOperation = 'lighter';
-            metaballs.forEach(mb => {
-                ctx.fillStyle = `rgba(61, 139, 255, 0.9)`;
-                ctx.beginPath();
-                ctx.arc(mb.x, mb.y, mb.radius * 0.7, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            ctx.globalCompositeOperation = 'source-over';
+        function init() {
+            centerX = canvas.width / 2;
+            centerY = canvas.height / 2;
+            particles.length = 0;
+            ctx.font = `${asciiFontSize}px 'VT323', monospace`;
+            for (let i = 0; i < numParticles; i++) {
+                particles.push(new Particle());
+            }
         }
 
         function animate() {
-            ctx.fillStyle = 'rgba(2, 3, 5, 0.1)';
+            ctx.fillStyle = 'rgba(2, 3, 5, 0.1)'; // Clear with a slight fade
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            metaballs.forEach(mb => mb.update());
-            drawMetaballs();
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
 
             requestAnimationFrame(animate);
         }
-        
+
+        init();
         animate();
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            // No need to re-initialize metaballs as they adjust their bounds.
+            // Re-initialize particles to adapt to new dimensions and recalculate center
+            init();
         });
     </script>
 </body>
