@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Cosmic Vortex</title>
+    <title>Data Stream</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -30,7 +30,7 @@
             0%, 100% { background-position: 0 0, 0 0; }
             50% { background-position: 50% 50%, 10px 10px; }
         }
-        #galaxy-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #particle-flow-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
         .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
         h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
@@ -40,72 +40,54 @@
     </style>
 </head>
 <body>
-    <canvas id="galaxy-canvas"></canvas>
+    <canvas id="particle-flow-canvas"></canvas>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <p>The date went really well. Sarah ended up staying close to when the party was, so she got to meet Sophie and West. Her and Sophie got along very well and she invited Sophie to her birthday party (obviously I'm also invited). I still get the urge to self-sabotage sometimes but when I think about it its not very rational. The party went good too. Arty said it was their best birthday ever. I also called Safta and will call her tomorrow too. Hopefully I don't feel awful at work tomorrow. For missing so many days.&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;</p>
+        <p>Do you believe people can change? Andrew reached out to me to try and be friends again. I rejected him, but he went to have lunch with Justin. I don't have any anger for him anymore, just pitty. I just know I owe it to myself to not be his friend again. The person he was back then hurt me a lot, but is he really the same person? When I think of myself and the lessons I learned, I can't help but see that person as someone who isn't me, but instead just a person that I happen to share memories with. Me now and the person I was in high school don't share a single atom according to science. Do you believe people can change?&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</p>
     </div>
     <footer></footer>
     <script>
-        const canvas = document.getElementById('galaxy-canvas');
+        const canvas = document.getElementById('particle-flow-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
         const particles = [];
-        const numParticles = 2000; // Increased for a denser ASCII effect
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:",.<>/?`~ ';
-        const asciiFontSize = 12;
-        
-        let centerX, centerY;
+        const numParticles = 300;
 
         class Particle {
             constructor() {
-                this.x = Math.random() * canvas.width;
+                this.x = -Math.random() * canvas.width; // Start off-screen to the left
                 this.y = Math.random() * canvas.height;
-                this.vx = (Math.random() - 0.5) * 1; // Initial random velocity
-                this.vy = (Math.random() - 0.5) * 1;
-                this.char = chars[Math.floor(Math.random() * chars.length)];
-                this.opacity = Math.random() * 0.4 + 0.1; // Dimmer opacity
-                this.color = `rgba(0, 80, 0, ${this.opacity})`; // Dim green
-                this.size = Math.random() * 0.8 + 0.2; // Use for speed variation
+                this.size = Math.random() * 2 + 1;
+                this.speed = Math.random() * 0.5 + 0.1; // Speed from left to right
+                this.opacity = Math.random() * 0.7 + 0.3;
+                this.colorHue = Math.random() * 360; // Random hue for subtle color shifts
             }
 
             update() {
-                // Apply a subtle pull towards the center to create a swirling effect
-                const dx = centerX - this.x;
-                const dy = centerY - this.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                
-                // Rotational force component (swirl)
-                this.vx += (dy / dist) * 0.005 * this.size;
-                this.vy += (-dx / dist) * 0.005 * this.size;
-
-                // Dampen velocity to prevent infinite acceleration
-                this.vx *= 0.99;
-                this.vy *= 0.99;
-
-                this.x += this.vx;
-                this.y += this.vy;
-
-                // Wrap around edges
-                if (this.x < -asciiFontSize) this.x = canvas.width;
-                if (this.x > canvas.width + asciiFontSize) this.x = -asciiFontSize;
-                if (this.y < -asciiFontSize) this.y = canvas.height;
-                if (this.y > canvas.height + asciiFontSize) this.y = -asciiFontSize;
+                this.x += this.speed;
+                if (this.x > canvas.width + this.size) { // Reset when off-screen to the right
+                    this.x = -this.size; // Reset to left
+                    this.y = Math.random() * canvas.height;
+                    this.size = Math.random() * 2 + 1;
+                    this.speed = Math.random() * 0.5 + 0.1;
+                    this.opacity = Math.random() * 0.7 + 0.3;
+                    this.colorHue = Math.random() * 360;
+                }
             }
 
             draw() {
-                ctx.fillStyle = this.color;
-                ctx.fillText(this.char, this.x, this.y);
+                ctx.beginPath();
+                // Subtle color shift
+                ctx.fillStyle = `hsla(${this.colorHue}, 70%, 50%, ${this.opacity})`;
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
 
         function init() {
-            centerX = canvas.width / 2;
-            centerY = canvas.height / 2;
             particles.length = 0;
-            ctx.font = `${asciiFontSize}px 'VT323', monospace`;
             for (let i = 0; i < numParticles; i++) {
                 particles.push(new Particle());
             }
@@ -129,8 +111,7 @@
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            // Re-initialize particles to adapt to new dimensions and recalculate center
-            init();
+            init(); // Re-initialize particles for new screen size
         });
     </script>
 </body>
