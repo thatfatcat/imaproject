@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Data Stream</title>
+    <title>Sonic Spectrum</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -30,77 +30,80 @@
             0%, 100% { background-position: 0 0, 0 0; }
             50% { background-position: 50% 50%, 10px 10px; }
         }
-        #particle-flow-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #waveform-vis-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
         .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
         h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
         p { margin-bottom: 1.5rem; width: 100%; }
         footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
         @media (max-width: 768px) { h1 { font-size: 2rem; } }
+        @media (max-width: 480px) { /* Adjust for very small screens like 7-inch tablets/phones */
+            h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+            p { font-size: 0.8rem; line-height: 1.5; }
+            .container { padding: 8vw; min-height: 80vh; } /* More padding, less height */
+        }
     </style>
 </head>
 <body>
-    <canvas id="particle-flow-canvas"></canvas>
+    <canvas id="waveform-vis-canvas"></canvas>
     <div class="container">
-        <h1>[Message_of_the_day]</h1>
-        <p>Do you believe people can change? Andrew reached out to me to try and be friends again. I rejected him, but he went to have lunch with Justin. I don't have any anger for him anymore, just pitty. I just know I owe it to myself to not be his friend again. The person he was back then hurt me a lot, but is he really the same person? When I think of myself and the lessons I learned, I can't help but see that person as someone who isn't me, but instead just a person that I happen to share memories with. Me now and the person I was in high school don't share a single atom according to science. Do you believe people can change?&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</p>
+        <h1>[message_of_the_day]</h1>
+        <p>Today we got a 1 million dollar shipment of computers. I don't think I've ever visualized that large of an amount of money to actual material. When counting the computers I was a bit disturbed because we were missing around $100,000 of computers. Ill have to count again tomorrow. I talked to my boss about it and he said "Don't ask me you're supposed to be the numbers genius" or something like that. Sometimes I feel useless at work.&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;</p>
     </div>
     <footer></footer>
     <script>
-        const canvas = document.getElementById('particle-flow-canvas');
+        const canvas = document.getElementById('waveform-vis-canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        
+        let numBars;
+        const minBarWidth = 4; // Minimum bar width in pixels
+        let barWidth;
+        let audioData; // Will be initialized dynamically
+        let hueOffset = 0;
 
-        const particles = [];
-        const numParticles = 300;
-
-        class Particle {
-            constructor() {
-                this.x = -Math.random() * canvas.width; // Start off-screen to the left
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 2 + 1;
-                this.speed = Math.random() * 0.5 + 0.1; // Speed from left to right
-                this.opacity = Math.random() * 0.7 + 0.3;
-                this.colorHue = Math.random() * 360; // Random hue for subtle color shifts
-            }
-
-            update() {
-                this.x += this.speed;
-                if (this.x > canvas.width + this.size) { // Reset when off-screen to the right
-                    this.x = -this.size; // Reset to left
-                    this.y = Math.random() * canvas.height;
-                    this.size = Math.random() * 2 + 1;
-                    this.speed = Math.random() * 0.5 + 0.1;
-                    this.opacity = Math.random() * 0.7 + 0.3;
-                    this.colorHue = Math.random() * 360;
-                }
-            }
-
-            draw() {
-                ctx.beginPath();
-                // Subtle color shift
-                ctx.fillStyle = `hsla(${this.colorHue}, 70%, 50%, ${this.opacity})`;
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
+        function generateAudioData() {
+            // Simulate dynamic audio data
+            for (let i = 0; i < numBars; i++) {
+                audioData[i] = Math.sin(i * 0.1 + hueOffset * 0.05) * 128 + 128;
             }
         }
 
         function init() {
-            particles.length = 0;
-            for (let i = 0; i < numParticles; i++) {
-                particles.push(new Particle());
-            }
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            numBars = Math.floor(canvas.width / minBarWidth);
+            if (numBars === 0) numBars = 1; // Ensure at least one bar
+            
+            barWidth = canvas.width / numBars;
+            audioData = new Uint8Array(numBars); // Re-initialize audioData array size
+
+            // Initial audio data generation
+            generateAudioData();
         }
 
         function animate() {
             ctx.fillStyle = 'rgba(2, 3, 5, 0.1)'; // Clear with a slight fade
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            particles.forEach(p => {
-                p.update();
-                p.draw();
-            });
+            generateAudioData();
+            hueOffset += 0.01;
+
+            for (let i = 0; i < numBars; i++) {
+                const barHeight = audioData[i] * 0.7; // Scale height
+                const x = i * barWidth;
+                const y = canvas.height - barHeight;
+
+                // Gradient for each bar
+                const gradient = ctx.createLinearGradient(x, canvas.height, x, y);
+                const hue = (hueOffset * 10 + i * 2) % 360; // Dynamic hue
+                gradient.addColorStop(0, `hsla(${hue}, 70%, 50%, 0.2)`);
+                gradient.addColorStop(0.5, `hsla(${hue}, 70%, 50%, 0.8)`);
+                gradient.addColorStop(1, `hsla(${hue}, 70%, 50%, 1)`);
+
+                ctx.fillStyle = gradient;
+                ctx.fillRect(x, y, barWidth - 1, barHeight); // -1 for a small gap
+            }
 
             requestAnimationFrame(animate);
         }
@@ -108,11 +111,7 @@
         init();
         animate();
 
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            init(); // Re-initialize particles for new screen size
-        });
+        window.addEventListener('resize', init);
     </script>
 </body>
 </html>
