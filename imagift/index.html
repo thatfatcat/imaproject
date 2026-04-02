@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Sonic Spectrum</title>
+    <title>Celebration Cascade</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -30,86 +30,183 @@
             0%, 100% { background-position: 0 0, 0 0; }
             50% { background-position: 50% 50%, 10px 10px; }
         }
-        #waveform-vis-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #fireworks-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
         .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
         h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
         p { margin-bottom: 1.5rem; width: 100%; }
         footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
         @media (max-width: 768px) { h1 { font-size: 2rem; } }
-        @media (max-width: 480px) { /* Adjust for very small screens like 7-inch tablets/phones */
-            h1 { font-size: 1.5rem; margin-bottom: 1rem; }
-            p { font-size: 0.8rem; line-height: 1.5; }
-            .container { padding: 8vw; min-height: 80vh; } /* More padding, less height */
-        }
     </style>
 </head>
 <body>
-    <canvas id="waveform-vis-canvas"></canvas>
+    <canvas id="fireworks-canvas"></canvas>
     <div class="container">
-        <h1>[message_of_the_day]</h1>
-        <p>Today we got a 1 million dollar shipment of computers. I don't think I've ever visualized that large of an amount of money to actual material. When counting the computers I was a bit disturbed because we were missing around $100,000 of computers. Ill have to count again tomorrow. I talked to my boss about it and he said "Don't ask me you're supposed to be the numbers genius" or something like that. Sometimes I feel useless at work.&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;</p>
+        <h1>[Message_of_the_day]</h1>
+      <p>This rocket launch has made me realize how much more I know about astronomy than the average person. I talked about it to a few people and got interesting inputs.&nbsp; For some reason I was really under the impression that most of the things I know in the topic were very common knowledge. No one I knew was aware that this was happening. Viki and Skyler don't believe that we've been to the moon before. When I told Sophie about the second Artemis mission she thought I was talking about the person.&nbsp;</p>
+        <p>In other news I think the rats have mites. The only time the vet is available is the day you land at 8 am so I'm not sure what to do. I can't medicate them myself, apparently its really easy to accidentally kill them that way.&nbsp; &nbsp; &nbsp;</p>
     </div>
     <footer></footer>
     <script>
-        const canvas = document.getElementById('waveform-vis-canvas');
+        const canvas = document.getElementById('fireworks-canvas');
         const ctx = canvas.getContext('2d');
-        
-        let numBars;
-        const minBarWidth = 4; // Minimum bar width in pixels
-        let barWidth;
-        let audioData; // Will be initialized dynamically
-        let hueOffset = 0;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        function generateAudioData() {
-            // Simulate dynamic audio data
-            for (let i = 0; i < numBars; i++) {
-                audioData[i] = Math.sin(i * 0.1 + hueOffset * 0.05) * 128 + 128;
+        const fireworks = [];
+        const particles = [];
+        const gravity = 0.03; // Reduced gravity
+        
+        class Firework {
+            constructor(startX, startY, targetX, targetY) {
+                this.x = startX;
+                this.y = startY;
+                this.startX = startX;
+                this.startY = startY;
+                this.targetX = targetX;
+                this.targetY = targetY;
+                this.distanceToTarget = Math.sqrt(Math.pow(targetX - startX, 2) + Math.pow(targetY - startY, 2));
+                this.angle = Math.atan2(targetY - startY, targetX - startX);
+                this.speed = Math.random() * 2 + 4; // Increased and randomized speed (4 to 6)
+                this.velocity = {
+                    x: Math.cos(this.angle) * this.speed,
+                    y: Math.sin(this.angle) * this.speed
+                };
+                this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                this.trail = []; // For the launching trail
+                this.trailLength = 5;
+            }
+
+            update() {
+                // Remove old trail segments
+                if (this.trail.length > this.trailLength) {
+                    this.trail.shift();
+                }
+                // Add current position to trail
+                this.trail.push({ x: this.x, y: this.y, color: this.color });
+
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.velocity.y += gravity; // Apply gravity
+
+                const distanceTraveled = Math.sqrt(Math.pow(this.startX - this.x, 2) + Math.pow(this.startY - this.y, 2));
+
+                if (distanceTraveled >= this.distanceToTarget) {
+                    this.explode();
+                    return true; // Mark for removal
+                }
+                return false;
+            }
+
+            draw() {
+                // Draw trail
+                this.trail.forEach((t, index) => {
+                    ctx.beginPath();
+                    ctx.arc(t.x, t.y, index * 0.1, 0, Math.PI * 2);
+                    ctx.fillStyle = t.color;
+                    ctx.fill();
+                });
+
+                // Draw main firework
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+
+            explode() {
+                for (let i = 0; i < 50; i++) {
+                    particles.push(new Particle(this.x, this.y, this.color));
+                }
             }
         }
 
-        function init() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.velocity = {
+                    x: (Math.random() - 0.5) * 5,
+                    y: (Math.random() - 0.5) * 5
+                };
+                this.color = color;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.03 + 0.01;
+                this.size = Math.random() * 3 + 1;
+            }
 
-            numBars = Math.floor(canvas.width / minBarWidth);
-            if (numBars === 0) numBars = 1; // Ensure at least one bar
-            
-            barWidth = canvas.width / numBars;
-            audioData = new Uint8Array(numBars); // Re-initialize audioData array size
+            update() {
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.velocity.y += gravity; // Apply gravity
+                this.alpha -= this.decay;
+                return this.alpha <= this.decay; // Mark for removal if faded
+            }
 
-            // Initial audio data generation
-            generateAudioData();
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
         }
 
-        function animate() {
-            ctx.fillStyle = 'rgba(2, 3, 5, 0.1)'; // Clear with a slight fade
+        function createFirework() {
+            const startX = canvas.width / 2;
+            const startY = canvas.height;
+            const targetX = Math.random() * canvas.width;
+            const targetY = Math.random() * (canvas.height / 2); // Explode in upper half
+            fireworks.push(new Firework(startX, startY, targetX, targetY));
+        }
+
+        let lastFireworkTime = 0;
+        const fireworkInterval = 1500; // Increased interval between fireworks
+        
+        function animate(currentTime) {
+            ctx.fillStyle = 'rgba(2, 3, 5, 0.1)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            generateAudioData();
-            hueOffset += 0.01;
+            // Create new firework if interval passed
+            if (currentTime - lastFireworkTime > fireworkInterval) {
+                createFirework();
+                lastFireworkTime = currentTime;
+            }
 
-            for (let i = 0; i < numBars; i++) {
-                const barHeight = audioData[i] * 0.7; // Scale height
-                const x = i * barWidth;
-                const y = canvas.height - barHeight;
+            // Update and draw fireworks
+            for (let i = fireworks.length - 1; i >= 0; i--) {
+                if (fireworks[i].update()) {
+                    fireworks.splice(i, 1);
+                } else {
+                    fireworks[i].draw();
+                }
+            }
 
-                // Gradient for each bar
-                const gradient = ctx.createLinearGradient(x, canvas.height, x, y);
-                const hue = (hueOffset * 10 + i * 2) % 360; // Dynamic hue
-                gradient.addColorStop(0, `hsla(${hue}, 70%, 50%, 0.2)`);
-                gradient.addColorStop(0.5, `hsla(${hue}, 70%, 50%, 0.8)`);
-                gradient.addColorStop(1, `hsla(${hue}, 70%, 50%, 1)`);
-
-                ctx.fillStyle = gradient;
-                ctx.fillRect(x, y, barWidth - 1, barHeight); // -1 for a small gap
+            // Update and draw particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                if (particles[i].update()) {
+                    particles.splice(i, 1);
+                } else {
+                    particles[i].draw();
+                }
             }
 
             requestAnimationFrame(animate);
         }
 
+        // Initial setup and start animation
+        function init() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            fireworks.length = 0;
+            particles.length = 0;
+            lastFireworkTime = performance.now(); // Reset time on init/resize
+        }
+        
         init();
-        animate();
+        animate(performance.now()); // Pass initial time
 
         window.addEventListener('resize', init);
     </script>
