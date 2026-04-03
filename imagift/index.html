@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Celebration Cascade</title>
+    <title>Binary Star Dance</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #020305;
+            --background-color: #000000; /* Explicitly black */
             --main-text-color: #b0c4de;
             --accent-color: #3d8bff;
             --secondary-text-color: #6a7380;
@@ -30,7 +30,7 @@
             0%, 100% { background-position: 0 0, 0 0; }
             50% { background-position: 50% 50%, 10px 10px; }
         }
-        #fireworks-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #binary-stars-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
         .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
         h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
@@ -40,173 +40,111 @@
     </style>
 </head>
 <body>
-    <canvas id="fireworks-canvas"></canvas>
+    <canvas id="binary-stars-canvas"></canvas>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-      <p>This rocket launch has made me realize how much more I know about astronomy than the average person. I talked about it to a few people and got interesting inputs.&nbsp; For some reason I was really under the impression that most of the things I know in the topic were very common knowledge. No one I knew was aware that this was happening. Viki and Skyler don't believe that we've been to the moon before. When I told Sophie about the second Artemis mission she thought I was talking about the person.&nbsp;</p>
-        <p>In other news I think the rats have mites. The only time the vet is available is the day you land at 8 am so I'm not sure what to do. I can't medicate them myself, apparently its really easy to accidentally kill them that way.&nbsp; &nbsp; &nbsp;</p>
+        <p>I read 250 pages of vinland saga at work today. I'm a few pages from being done with the series. I'm seeing Sarah tomorrow and I'm really excited. She brings to the table a lot of things I've never had in someone I'm dating, and I think me going to therapy is also really helpful. I'm excited for you guys to meet her.&nbsp;</p>
     </div>
     <footer></footer>
     <script>
-        const canvas = document.getElementById('fireworks-canvas');
+        const canvas = document.getElementById('binary-stars-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const fireworks = [];
         const particles = [];
-        const gravity = 0.03; // Reduced gravity
-        
-        class Firework {
-            constructor(startX, startY, targetX, targetY) {
-                this.x = startX;
-                this.y = startY;
-                this.startX = startX;
-                this.startY = startY;
-                this.targetX = targetX;
-                this.targetY = targetY;
-                this.distanceToTarget = Math.sqrt(Math.pow(targetX - startX, 2) + Math.pow(targetY - startY, 2));
-                this.angle = Math.atan2(targetY - startY, targetX - startX);
-                this.speed = Math.random() * 2 + 4; // Increased and randomized speed (4 to 6)
-                this.velocity = {
-                    x: Math.cos(this.angle) * this.speed,
-                    y: Math.sin(this.angle) * this.speed
-                };
-                this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
-                this.trail = []; // For the launching trail
-                this.trailLength = 5;
-            }
-
-            update() {
-                // Remove old trail segments
-                if (this.trail.length > this.trailLength) {
-                    this.trail.shift();
-                }
-                // Add current position to trail
-                this.trail.push({ x: this.x, y: this.y, color: this.color });
-
-                this.x += this.velocity.x;
-                this.y += this.velocity.y;
-                this.velocity.y += gravity; // Apply gravity
-
-                const distanceTraveled = Math.sqrt(Math.pow(this.startX - this.x, 2) + Math.pow(this.startY - this.y, 2));
-
-                if (distanceTraveled >= this.distanceToTarget) {
-                    this.explode();
-                    return true; // Mark for removal
-                }
-                return false;
-            }
-
-            draw() {
-                // Draw trail
-                this.trail.forEach((t, index) => {
-                    ctx.beginPath();
-                    ctx.arc(t.x, t.y, index * 0.1, 0, Math.PI * 2);
-                    ctx.fillStyle = t.color;
-                    ctx.fill();
-                });
-
-                // Draw main firework
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
-                ctx.fillStyle = this.color;
-                ctx.fill();
-            }
-
-            explode() {
-                for (let i = 0; i < 50; i++) {
-                    particles.push(new Particle(this.x, this.y, this.color));
-                }
-            }
-        }
+        const numParticles = 800;
+            star1 = { x: canvas.width * 0.35, y: canvas.height / 2, mass: 100, color: 'rgba(150, 150, 150, 0.8)' };
+            star2 = { x: canvas.width * 0.65, y: canvas.height / 2, mass: 100, color: 'rgba(150, 150, 150, 0.8)' };
+        const G = 0.5; // Gravitational constant
 
         class Particle {
-            constructor(x, y, color) {
+            constructor(x, y) {
                 this.x = x;
                 this.y = y;
-                this.velocity = {
-                    x: (Math.random() - 0.5) * 5,
-                    y: (Math.random() - 0.5) * 5
-                };
-                this.color = color;
-                this.alpha = 1;
-                this.decay = Math.random() * 0.03 + 0.01;
-                this.size = Math.random() * 3 + 1;
+                this.vx = (Math.random() - 0.5) * 5;
+                this.vy = (Math.random() - 0.5) * 5;
+                this.size = Math.random() * 2 + 0.5;
+                this.color = `rgba(176, 196, 222, ${Math.random() * 0.5 + 0.5})`; // White/blueish particles
+            }
+
+            applyGravity(targetStar) {
+                const dx = targetStar.x - this.x;
+                const dy = targetStar.y - this.y;
+                const distanceSq = dx * dx + dy * dy;
+                const distance = Math.sqrt(distanceSq);
+
+                if (distance > 1) { // Avoid division by zero and extreme forces at very close range
+                    const force = G * targetStar.mass / distanceSq;
+                    this.vx += (dx / distance) * force;
+                    this.vy += (dy / distance) * force;
+                }
             }
 
             update() {
-                this.x += this.velocity.x;
-                this.y += this.velocity.y;
-                this.velocity.y += gravity; // Apply gravity
-                this.alpha -= this.decay;
-                return this.alpha <= this.decay; // Mark for removal if faded
+                this.applyGravity(star1);
+                this.applyGravity(star2);
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Simple wrap-around if particles go too far off-screen
+                if (this.x < -100 || this.x > canvas.width + 100 || this.y < -100 || this.y > canvas.height + 100) {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.vx = (Math.random() - 0.5) * 5;
+                    this.vy = (Math.random() - 0.5) * 5;
+                }
             }
 
             draw() {
-                ctx.save();
-                ctx.globalAlpha = this.alpha;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fillStyle = this.color;
                 ctx.fill();
-                ctx.restore();
             }
         }
 
-        function createFirework() {
-            const startX = canvas.width / 2;
-            const startY = canvas.height;
-            const targetX = Math.random() * canvas.width;
-            const targetY = Math.random() * (canvas.height / 2); // Explode in upper half
-            fireworks.push(new Firework(startX, startY, targetX, targetY));
+        function init() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            star1.x = canvas.width * 0.35;
+            star1.y = canvas.height / 2;
+            star2.x = canvas.width * 0.65;
+            star2.y = canvas.height / 2;
+
+            particles.length = 0;
+            for (let i = 0; i < numParticles; i++) {
+                particles.push(new Particle(Math.random() * canvas.width, Math.random() * canvas.height));
+            }
         }
 
-        let lastFireworkTime = 0;
-        const fireworkInterval = 1500; // Increased interval between fireworks
-        
-        function animate(currentTime) {
-            ctx.fillStyle = 'rgba(2, 3, 5, 0.1)';
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // Black background with subtle fade
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Create new firework if interval passed
-            if (currentTime - lastFireworkTime > fireworkInterval) {
-                createFirework();
-                lastFireworkTime = currentTime;
-            }
-
-            // Update and draw fireworks
-            for (let i = fireworks.length - 1; i >= 0; i--) {
-                if (fireworks[i].update()) {
-                    fireworks.splice(i, 1);
-                } else {
-                    fireworks[i].draw();
-                }
-            }
+            // Draw stars
+            ctx.beginPath();
+            ctx.arc(star1.x, star1.y, 10, 0, Math.PI * 2);
+            ctx.fillStyle = star1.color;
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(star2.x, star2.y, 10, 0, Math.PI * 2);
+            ctx.fillStyle = star2.color;
+            ctx.fill();
 
             // Update and draw particles
-            for (let i = particles.length - 1; i >= 0; i--) {
-                if (particles[i].update()) {
-                    particles.splice(i, 1);
-                } else {
-                    particles[i].draw();
-                }
-            }
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
 
             requestAnimationFrame(animate);
         }
 
-        // Initial setup and start animation
-        function init() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            fireworks.length = 0;
-            particles.length = 0;
-            lastFireworkTime = performance.now(); // Reset time on init/resize
-        }
-        
         init();
-        animate(performance.now()); // Pass initial time
+        animate();
 
         window.addEventListener('resize', init);
     </script>
