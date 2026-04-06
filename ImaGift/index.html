@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Binary Star Dance</title>
+    <title>Dynamic Cubescape</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #000000; /* Explicitly black */
+            --background-color: #000000;
             --main-text-color: #b0c4de;
             --accent-color: #3d8bff;
             --secondary-text-color: #6a7380;
@@ -30,7 +30,7 @@
             0%, 100% { background-position: 0 0, 0 0; }
             50% { background-position: 50% 50%, 10px 10px; }
         }
-        #binary-stars-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #cubes-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
         .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
         h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
@@ -40,113 +40,94 @@
     </style>
 </head>
 <body>
-    <canvas id="binary-stars-canvas"></canvas>
+    <div id="cubes-canvas"></div>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <p>I read 250 pages of vinland saga at work today. I'm a few pages from being done with the series. I'm seeing Sarah tomorrow and I'm really excited. She brings to the table a lot of things I've never had in someone I'm dating, and I think me going to therapy is also really helpful. I'm excited for you guys to meet her.&nbsp;</p>
+        <p>I'm really stressed about the shape the house is in for you guys. I was going to clean a lot today but had a really bad headache. I think its a sinus headache. I always have these migraine symptoms when my nose gets stuffy, and they get worse when I'm leaning over. I did really need a day of doing absolutely nothing like today. Also I officially finished vinland saga, and am upset with the ending. If the book ended 20 chapters earlier I would be a lot happier with it, and the story would feel just as complete. Excited to see you guys.&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</p>
     </div>
     <footer></footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        const canvas = document.getElementById('binary-stars-canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        const particles = [];
-        const numParticles = 800;
-            star1 = { x: canvas.width * 0.35, y: canvas.height / 2, mass: 100, color: 'rgba(150, 150, 150, 0.8)' };
-            star2 = { x: canvas.width * 0.65, y: canvas.height / 2, mass: 100, color: 'rgba(150, 150, 150, 0.8)' };
-        const G = 0.5; // Gravitational constant
-
-        class Particle {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.vx = (Math.random() - 0.5) * 5;
-                this.vy = (Math.random() - 0.5) * 5;
-                this.size = Math.random() * 2 + 0.5;
-                this.color = `rgba(176, 196, 222, ${Math.random() * 0.5 + 0.5})`; // White/blueish particles
-            }
-
-            applyGravity(targetStar) {
-                const dx = targetStar.x - this.x;
-                const dy = targetStar.y - this.y;
-                const distanceSq = dx * dx + dy * dy;
-                const distance = Math.sqrt(distanceSq);
-
-                if (distance > 1) { // Avoid division by zero and extreme forces at very close range
-                    const force = G * targetStar.mass / distanceSq;
-                    this.vx += (dx / distance) * force;
-                    this.vy += (dy / distance) * force;
-                }
-            }
-
-            update() {
-                this.applyGravity(star1);
-                this.applyGravity(star2);
-
-                this.x += this.vx;
-                this.y += this.vy;
-
-                // Simple wrap-around if particles go too far off-screen
-                if (this.x < -100 || this.x > canvas.width + 100 || this.y < -100 || this.y > canvas.height + 100) {
-                    this.x = Math.random() * canvas.width;
-                    this.y = Math.random() * canvas.height;
-                    this.vx = (Math.random() - 0.5) * 5;
-                    this.vy = (Math.random() - 0.5) * 5;
-                }
-            }
-
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = this.color;
-                ctx.fill();
-            }
-        }
+        let scene, camera, renderer;
+        const cubes = [];
+        const gridSize = 10;
+        const cubeSize = 8;
+        const spacing = 12;
+        let animationTime = 0;
 
         function init() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            // Scene
+            scene = new THREE.Scene();
 
-            star1.x = canvas.width * 0.35;
-            star1.y = canvas.height / 2;
-            star2.x = canvas.width * 0.65;
-            star2.y = canvas.height / 2;
+            // Camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 50, 100);
+            camera.lookAt(0, 0, 0);
 
-            particles.length = 0;
-            for (let i = 0; i < numParticles; i++) {
-                particles.push(new Particle(Math.random() * canvas.width, Math.random() * canvas.height));
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0); // Transparent background
+            document.getElementById('cubes-canvas').appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040); // Soft white light
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(1, 1, 1).normalize();
+            scene.add(directionalLight);
+
+            // Create grid of cubes
+            const startX = -(gridSize / 2) * spacing + spacing / 2;
+            const startZ = -(gridSize / 2) * spacing + spacing / 2;
+
+            for (let x = 0; x < gridSize; x++) {
+                for (let z = 0; z < gridSize; z++) {
+                    const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+                    const material = new THREE.MeshLambertMaterial({ color: 0x3d8bff });
+                    const cube = new THREE.Mesh(geometry, material);
+                    cube.position.set(
+                        startX + x * spacing,
+                        0, // Initial Y position
+                        startZ + z * spacing
+                    );
+                    scene.add(cube);
+                    cubes.push(cube);
+                }
             }
         }
 
         function animate() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // Black background with subtle fade
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            requestAnimationFrame(animate);
 
-            // Draw stars
-            ctx.beginPath();
-            ctx.arc(star1.x, star1.y, 10, 0, Math.PI * 2);
-            ctx.fillStyle = star1.color;
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(star2.x, star2.y, 10, 0, Math.PI * 2);
-            ctx.fillStyle = star2.color;
-            ctx.fill();
-
-            // Update and draw particles
-            particles.forEach(p => {
-                p.update();
-                p.draw();
+            // Animate cubes
+            cubes.forEach(cube => {
+                const distance = Math.sqrt(
+                    Math.pow(cube.position.x, 2) + Math.pow(cube.position.z, 2)
+                );
+                // Make cubes bounce in a wave-like pattern based on distance from center and time
+                cube.position.y = Math.sin((distance * 0.5) + animationTime) * 5; // Amplitude of 5
             });
 
-            requestAnimationFrame(animate);
+            animationTime += 0.05;
+
+            // Rotate camera for dynamic view
+            camera.position.x = Math.sin(animationTime * 0.1) * 100;
+            camera.position.z = Math.cos(animationTime * 0.1) * 100;
+            camera.lookAt(0, 0, 0);
+
+
+            renderer.render(scene, camera);
         }
 
         init();
         animate();
 
-        window.addEventListener('resize', init);
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
