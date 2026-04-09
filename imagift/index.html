@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Bouncing Orbs</title>
+    <title>Abstract Flow</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -30,7 +30,7 @@
             0%, 100% { background-position: 0 0, 0 0; }
             50% { background-position: 50% 50%, 10px 10px; }
         }
-        #bouncing-dots-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #flowing-lines-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
         .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
         h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
@@ -40,58 +40,66 @@
     </style>
 </head>
 <body>
-    <canvas id="bouncing-dots-canvas"></canvas>
+    <canvas id="flowing-lines-canvas"></canvas>
     <div class="container">
-        <h1>[Message_Of_the_day]</h1>
-        <p>Today I had a meeting with the client success team and I managed to get a lot of people on board with my naming convention. The department head joined us halfway through and although I felt it was bad timing politically, my boss brought up the naming convention. I kind of ran the meeting and got us organized to see if we can make this happen. This will require a lot of research and work on my end but I think it overall went great for me.&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</p>
+        <h1>[message_of_the_day]</h1>
+        <p>You guys coming makes me feel like when I was in high school and summer break was coming up. Please send me your flight number!</p>
     </div>
     <footer></footer>
     <script>
-        const canvas = document.getElementById('bouncing-dots-canvas');
+        const canvas = document.getElementById('flowing-lines-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const dots = [];
-        const numDots = 50;
-        const dotRadius = 5;
+        const lines = [];
+        const numLines = 20;
+        const lineLength = 200;
+        const lineSpeed = 1;
+        let time = 0;
 
-        class Dot {
+        class FlowingLine {
             constructor() {
                 this.x = Math.random() * canvas.width;
                 this.y = Math.random() * canvas.height;
-                this.dx = (Math.random() - 0.5) * 4; // Horizontal speed
-                this.dy = (Math.random() - 0.5) * 4; // Vertical speed
-                this.color = `hsl(${Math.random() * 360}, 70%, 50%)`; // Random vibrant color
+                this.angle = Math.random() * Math.PI * 2; // Initial direction
+                this.speed = Math.random() * 0.5 + 0.5; // Variation in speed
+                this.colorHue = Math.random() * 360;
+                this.lineWidth = Math.random() * 2 + 1;
+            }
+
+            update() {
+                // Subtle change in angle over time
+                this.angle += Math.sin(time * 0.01 + this.x * 0.01) * 0.05;
+
+                this.x += Math.cos(this.angle) * this.speed * lineSpeed;
+                this.y += Math.sin(this.angle) * this.speed * lineSpeed;
+
+                // Wrap around edges
+                if (this.x < -lineLength) this.x = canvas.width + lineLength;
+                if (this.x > canvas.width + lineLength) this.x = -lineLength;
+                if (this.y < -lineLength) this.y = canvas.height + lineLength;
+                if (this.y > canvas.height + lineLength) this.y = -lineLength;
+
+                this.colorHue = (this.colorHue + 0.1) % 360; // Gently shift hue
             }
 
             draw() {
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, dotRadius, 0, Math.PI * 2);
-                ctx.fillStyle = this.color;
-                ctx.fill();
-            }
-
-            update() {
-                this.x += this.dx;
-                this.y += this.dy;
-
-                // Bounce off walls
-                if (this.x + dotRadius > canvas.width || this.x - dotRadius < 0) {
-                    this.dx *= -1;
-                }
-                if (this.y + dotRadius > canvas.height || this.y - dotRadius < 0) {
-                    this.dy *= -1;
-                }
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x - Math.cos(this.angle) * lineLength, this.y - Math.sin(this.angle) * lineLength);
+                ctx.strokeStyle = `hsla(${this.colorHue}, 80%, 60%, 0.8)`;
+                ctx.lineWidth = this.lineWidth;
+                ctx.stroke();
             }
         }
 
         function init() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            dots.length = 0; // Clear existing dots on resize
-            for (let i = 0; i < numDots; i++) {
-                dots.push(new Dot());
+            lines.length = 0; // Clear existing lines on resize
+            for (let i = 0; i < numLines; i++) {
+                lines.push(new FlowingLine());
             }
         }
 
@@ -99,10 +107,12 @@
             ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // Black background with subtle fade
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            dots.forEach(dot => {
-                dot.update();
-                dot.draw();
+            lines.forEach(line => {
+                line.update();
+                line.draw();
             });
+
+            time += 0.1; // Increment global time for animation variation
 
             requestAnimationFrame(animate);
         }
