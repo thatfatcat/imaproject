@@ -4,154 +4,106 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Animation 29</title>
+    <title>Cosmic Drift</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #000000;
-            --main-text-color: #f0f0f0;
-            --accent-color: #ffff00; /* Yellow for the spotlight */
-            --secondary-text-color: #ddddaa;
+            --background-color: #00000c;
+            --main-text-color: #e0e0e0;
+            --accent-color: #ff6ac1;
+            --secondary-text-color: #8892b0;
+            --star-color-1: #ffffff;
+            --star-color-2: #c0c0ff;
+            --star-color-3: #ffc0c0;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
         body, html {
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
-            overflow: hidden;
+            line-height: 1.6; overflow: hidden;
         }
-        #spotlight-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-        }
-        .container, footer {
-            position: relative;
-            z-index: 1;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 4vw;
-            min-height: 90vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-        h1 {
-            font-family: var(--font-display);
-            font-size: 3rem;
-            color: var(--accent-color);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: normal;
-            margin-bottom: 1.5rem;
-            text-shadow: 0 0 10px var(--accent-color);
-        }
-        p {
-            margin-bottom: 1.5rem;
-            width: 100%;
-            max-width: 600px;
-        }
-        footer {
-            text-align: center;
-            padding: 2rem 0;
-            font-size: 0.9rem;
-            color: var(--secondary-text-color);
-            margin-top: auto;
-            width: 100%;
-        }
+        #starfield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .container, footer { position: relative; z-index: 1; }
+        .container { max-width: 750px; margin: 0 auto; padding: 5vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        h1 { font-family: var(--font-display); font-size: 2.2rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 1.5rem 0; letter-spacing: 3px; font-weight: 700; text-shadow: 0 0 10px var(--accent-color); }
+        p { margin-bottom: 1.5rem; width: 100%; }
+        footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
+        @media (max-width: 768px) { h1 { font-size: 1.8rem; } }
     </style>
 </head>
 <body>
-    <canvas id="spotlight-canvas"></canvas>
+    <canvas id="starfield"></canvas>
     <div class="container">
-        <h1>[Message_Of_The_day]</h1>
-        <p>I hope you were able to sleep. I was afraid that I'd feel some negative way towards thorfinn but I still love him very much. Thank you for taking such good care of my boy. You made him very happy.</p>
+        <h1>[Message_of_the_day]</h1>
+        <p>The school suddenly turned into a ghost town. There are no students walking around, no tickets, the cafeteria is closed. It's like I got a new job. It's honestly refreshing for now, though I do miss the cafeteria dearly. I'm hoping the summer projects are super easy to get through and I get to continue reading a book a day like I have been.</p>
     </div>
-    <footer><p>
-
+    <footer></footer>
     <script>
-        const canvas = document.getElementById('spotlight-canvas');
+        const canvas = document.getElementById('starfield');
         const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        const resolution = 12;
-        const allChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()[]{}';
-        let cols, rows;
-        let charGrid;
-        let time = 0;
-
-        function make2DArray(cols, rows) {
-            let arr = new Array(cols);
-            for (let i = 0; i < arr.length; i++) {
-                arr[i] = new Array(rows);
+        class Star {
+            constructor() {
+                this.x = Math.random() * canvas.width - canvas.width / 2;
+                this.y = Math.random() * canvas.height - canvas.height / 2;
+                this.z = Math.random() * canvas.width;
+                this.pz = this.z;
+                const colors = [getComputedStyle(document.body).getPropertyValue('--star-color-1').trim(), getComputedStyle(document.body).getPropertyValue('--star-color-2').trim(), getComputedStyle(document.body).getPropertyValue('--star-color-3').trim()];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
             }
-            return arr;
-        }
 
-        function setup() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            cols = Math.floor(canvas.width / resolution);
-            rows = Math.floor(canvas.height / resolution);
-            
-            charGrid = make2DArray(cols, rows);
-            for (let i = 0; i < cols; i++) {
-                for (let j = 0; j < rows; j++) {
-                    charGrid[i][j] = allChars.charAt(Math.floor(Math.random() * allChars.length));
+            update() {
+                this.z -= 5;
+                if (this.z < 1) {
+                    this.z = canvas.width;
+                    this.x = Math.random() * canvas.width - canvas.width / 2;
+                    this.y = Math.random() * canvas.height - canvas.height / 2;
+                    this.pz = this.z;
                 }
             }
-        }
 
-        function draw() {
-            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--background-color');
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            const spotlight = {
-                x: canvas.width / 2 + Math.sin(time * 0.02) * (canvas.width / 3),
-                y: canvas.height / 2 + Math.cos(time * 0.03) * (canvas.height / 3),
-                radius: 150
-            };
+            draw() {
+                const sx = (this.x / this.z) * canvas.width / 2 + canvas.width / 2;
+                const sy = (this.y / this.z) * canvas.height / 2 + canvas.height / 2;
+                const r = Math.max(0.1, (1 - this.z / canvas.width) * 2.5);
 
-            ctx.font = `${resolution}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
+                const psx = (this.x / this.pz) * canvas.width / 2 + canvas.width / 2;
+                const psy = (this.y / this.pz) * canvas.height / 2 + canvas.height / 2;
 
-            for (let i = 0; i < cols; i++) {
-                for (let j = 0; j < rows; j++) {
-                    const charX = i * resolution;
-                    const charY = j * resolution;
-                    
-                    const dx = charX - spotlight.x;
-                    const dy = charY - spotlight.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (distance < spotlight.radius) {
-                        const opacity = 1 - (distance / spotlight.radius);
-                        ctx.fillStyle = `rgba(255, 255, 0, ${opacity})`;
-                        ctx.fillText(charGrid[i][j], charX, charY);
-                    } else {
-                        // Optionally draw dim characters outside the spotlight
-                         ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-                         ctx.fillText(charGrid[i][j], charX, charY);
-                    }
-                }
+                ctx.beginPath();
+                ctx.moveTo(psx, psy);
+                ctx.lineTo(sx, sy);
+                ctx.lineWidth = r;
+                ctx.strokeStyle = this.color;
+                ctx.stroke();
+
+                this.pz = this.z;
             }
-            time++;
         }
+
+        const stars = Array.from({ length: 800 }, () => new Star());
 
         function animate() {
-            draw();
+            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--background-color').trim();
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            stars.forEach(star => {
+                star.update();
+                star.draw();
+            });
+
             requestAnimationFrame(animate);
         }
-
-        window.addEventListener('resize', setup);
-        setup();
+        
         animate();
 
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
     </script>
 </body>
 </html>
