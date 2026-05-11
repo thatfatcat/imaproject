@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Starlight Transmission</title>
+    <title>Floating Energy</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -30,7 +30,7 @@
             0%, 100% { background-position: 0 0, 0 0; }
             50% { background-position: 50% 50%, 10px 10px; }
         }
-        #starfield-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #orbs-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
         .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
         h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
@@ -40,63 +40,82 @@
     </style>
 </head>
 <body>
-    <canvas id="starfield-canvas"></canvas>
+    <canvas id="orbs-canvas"></canvas>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <p>Stephen came over today to move his bagpipes to his room. We watched a bugs life and figured out the rent situation. Question for you guys: Do you think morality is subjective or objective? Do you think society decides what moral and what isn't or is morality decided objectively regardless of what people's opinions are?</p>
+        <p>Today we did Viki's second birthday party. For me, it was much more fun than the first. Everyone was having a good time and we laughed a lot. We ended up doing some prank calls on people that were extremely funny. Then I put on my Gi and sparred Kaeden in wrestling. I rarely have fun with alcohol but this time it was fun.</p>
     </div>
     <footer></footer>
     <script>
-        const canvas = document.getElementById('starfield-canvas');
+        const canvas = document.getElementById('orbs-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const stars = [];
-        const numStars = 800;
+        const orbs = [];
+        const numOrbs = 15;
 
-        for (let i = 0; i < numStars; i++) {
-            stars.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                z: Math.random() * canvas.width,
-                size: Math.random() * 2 + 1,
-            });
+        class Orb {
+            constructor() {
+                this.radius = Math.random() * 20 + 10;
+                this.x = Math.random() * (canvas.width - this.radius * 2) + this.radius;
+                this.y = Math.random() * (canvas.height - this.radius * 2) + this.radius;
+                this.dx = (Math.random() - 0.5) * 2;
+                this.dy = (Math.random() - 0.5) * 2;
+                this.color = `rgba(${Math.random() * 50 + 100}, ${Math.random() * 50 + 150}, 255, 0.7)`;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 20;
+                ctx.fill();
+                ctx.closePath();
+            }
+
+            update() {
+                this.x += this.dx;
+                this.y += this.dy;
+
+                // Wall collision
+                if (this.x + this.radius > canvas.width || this.x - this.radius < 0) {
+                    this.dx *= -1;
+                }
+                if (this.y + this.radius > canvas.height || this.y - this.radius < 0) {
+                    this.dy *= -1;
+                }
+            }
+        }
+
+        function init() {
+            orbs.length = 0;
+            for (let i = 0; i < numOrbs; i++) {
+                orbs.push(new Orb());
+            }
         }
 
         function animate() {
-            ctx.fillStyle = 'rgba(2, 3, 5, 0.15)';
+            ctx.shadowBlur = 0; // Reset shadow blur before clearing
+            ctx.fillStyle = 'rgba(2, 3, 5, 0.2)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.fillStyle = 'rgba(176, 196, 222, 0.8)';
-            
-            for (let i = 0; i < numStars; i++) {
-                const star = stars[i];
-                star.z -= 1;
-
-                if (star.z <= 0) {
-                    star.z = canvas.width;
-                    star.x = Math.random() * canvas.width;
-                    star.y = Math.random() * canvas.height;
-                }
-
-                const x = (star.x - canvas.width / 2) * (canvas.width / star.z) + canvas.width / 2;
-                const y = (star.y - canvas.height / 2) * (canvas.width / star.z) + canvas.height / 2;
-                const radius = star.size * (canvas.width / star.z);
-
-                ctx.beginPath();
-                ctx.arc(x, y, radius, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            orbs.forEach(orb => {
+                orb.update();
+                orb.draw();
+            });
 
             requestAnimationFrame(animate);
         }
-        
+
+        init();
         animate();
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            init();
         });
     </script>
 </body>
