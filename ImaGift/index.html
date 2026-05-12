@@ -4,119 +4,149 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Floating Energy</title>
+    <title>Animation 32</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #020305;
-            --main-text-color: #b0c4de;
-            --accent-color: #3d8bff;
-            --secondary-text-color: #6a7380;
-            --scanline-opacity: 0.05;
-            --noise-opacity: 0.03;
+            --background-color: #000000;
+            --main-text-color: #f0f0f0;
+            --accent-color: #ffffff; /* Initial color, will be changed by JS */
+            --secondary-text-color: #cccccc;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
         body, html {
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
-            line-height: 1.7; overflow: hidden;
-            background-image:
-                radial-gradient(ellipse at center, rgba(176, 196, 222, 0.03), transparent 80%),
-                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, var(--scanline-opacity)) 1px, rgba(255, 255, 255, var(--scanline-opacity)) 2px);
-            animation: noise 1s steps(2) infinite;
+            overflow: hidden;
         }
-        @keyframes noise {
-            0%, 100% { background-position: 0 0, 0 0; }
-            50% { background-position: 50% 50%, 10px 10px; }
+        #bounce-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
         }
-        #orbs-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
-        .container, footer { position: relative; z-index: 1; }
-        .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
-        h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
-        p { margin-bottom: 1.5rem; width: 100%; }
-        footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
-        @media (max-width: 768px) { h1 { font-size: 2rem; } }
+        .container, footer {
+            position: relative;
+            z-index: 1;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4vw;
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        h1 {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: normal;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 0 10px var(--accent-color);
+        }
+        p {
+            margin-bottom: 1.5rem;
+            width: 100%;
+            max-width: 600px;
+        }
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            font-size: 0.9rem;
+            color: var(--secondary-text-color);
+            margin-top: auto;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
-    <canvas id="orbs-canvas"></canvas>
+    <canvas id="bounce-canvas"></canvas>
     <div class="container">
-        <h1>[Message_of_the_day]</h1>
-        <p>Today we did Viki's second birthday party. For me, it was much more fun than the first. Everyone was having a good time and we laughed a lot. We ended up doing some prank calls on people that were extremely funny. Then I put on my Gi and sparred Kaeden in wrestling. I rarely have fun with alcohol but this time it was fun.</p>
+        <h1>[message_of_the_day]</h1>
+        <p>Told my doctor about my sinuses and he gave me steroids. I've also noticed I gained a lot of weight recently. It's good for now but im afraid of it getting out of hand. It's also muscle mass though so I have to remind myself of that. Blood tests ordered too :(</p>
     </div>
-    <footer></footer>
+    <footer><p>
+
     <script>
-        const canvas = document.getElementById('orbs-canvas');
+        const canvas = document.getElementById('bounce-canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
 
-        const orbs = [];
-        const numOrbs = 15;
+        let logos = [];
+        const numLogos = 5;
 
-        class Orb {
-            constructor() {
-                this.radius = Math.random() * 20 + 10;
-                this.x = Math.random() * (canvas.width - this.radius * 2) + this.radius;
-                this.y = Math.random() * (canvas.height - this.radius * 2) + this.radius;
-                this.dx = (Math.random() - 0.5) * 2;
-                this.dy = (Math.random() - 0.5) * 2;
-                this.color = `rgba(${Math.random() * 50 + 100}, ${Math.random() * 50 + 150}, 255, 0.7)`;
-            }
+        function createLogo() {
+            const fontSize = 30;
+            ctx.font = `${fontSize}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
+            return {
+                text: "[*]",
+                x: Math.random() * (canvas.width - 100),
+                y: Math.random() * (canvas.height - 50),
+                vx: (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 2 + 1),
+                vy: (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 2 + 1),
+                color: `hsl(${Math.random() * 360}, 100%, 70%)`,
+                fontSize: fontSize,
+                width: ctx.measureText("[*]").width
+            };
+        }
 
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = this.color;
-                ctx.shadowColor = this.color;
-                ctx.shadowBlur = 20;
-                ctx.fill();
-                ctx.closePath();
-            }
-
-            update() {
-                this.x += this.dx;
-                this.y += this.dy;
-
-                // Wall collision
-                if (this.x + this.radius > canvas.width || this.x - this.radius < 0) {
-                    this.dx *= -1;
-                }
-                if (this.y + this.radius > canvas.height || this.y - this.radius < 0) {
-                    this.dy *= -1;
-                }
+        function setup() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            logos = [];
+            for(let i = 0; i < numLogos; i++){
+                logos.push(createLogo());
             }
         }
 
-        function init() {
-            orbs.length = 0;
-            for (let i = 0; i < numOrbs; i++) {
-                orbs.push(new Orb());
-            }
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            logos.forEach(logo => {
+                // Update position
+                logo.x += logo.vx;
+                logo.y += logo.vy;
+
+                // Collision detection
+                let hitWall = false;
+                if (logo.x + logo.width > canvas.width || logo.x < 0) {
+                    logo.vx *= -1;
+                    hitWall = true;
+                }
+                if (logo.y > canvas.height || logo.y - logo.fontSize < 0) {
+                    logo.vy *= -1;
+                    hitWall = true;
+                }
+
+                // Change color on hit
+                if (hitWall) {
+                    logo.color = `hsl(${Math.random() * 360}, 100%, 70%)`;
+                }
+
+                // Draw the logo
+                ctx.fillStyle = logo.color;
+                ctx.font = `${logo.fontSize}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
+                ctx.fillText(logo.text, logo.x, logo.y);
+            });
         }
 
         function animate() {
-            ctx.shadowBlur = 0; // Reset shadow blur before clearing
-            ctx.fillStyle = 'rgba(2, 3, 5, 0.2)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            orbs.forEach(orb => {
-                orb.update();
-                orb.draw();
-            });
-
+            draw();
             requestAnimationFrame(animate);
         }
 
-        init();
+        window.addEventListener('resize', setup);
+        setup();
         animate();
-
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            init();
-        });
     </script>
 </body>
 </html>
