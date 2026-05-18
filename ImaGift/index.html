@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Cosmic Vortex</title>
+    <title>Starlight Transmission</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -30,7 +30,7 @@
             0%, 100% { background-position: 0 0, 0 0; }
             50% { background-position: 50% 50%, 10px 10px; }
         }
-        #galaxy-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #starfield-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
         .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
         h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
@@ -40,97 +40,64 @@
     </style>
 </head>
 <body>
-    <canvas id="galaxy-canvas"></canvas>
+    <canvas id="starfield-canvas"></canvas>
     <div class="container">
-        <h1>[message_of_the_day]</h1>
-        <p>I hope you guys had a wonderful Aba's birthday. I'm starting a yu gi oh locals group at my house. We will meet on Thursdays, and we have a lot of new players which is exciting. I did spend my entire shopping budget on getting cards for everyone so I hope this pays off.</p>
+        <h1>[Message_of_the_day]</h1>
+        <p>
+        what is something that you really wanted to get into but just couldn't.</p>
     </div>
     <footer></footer>
     <script>
-        const canvas = document.getElementById('galaxy-canvas');
+        const canvas = document.getElementById('starfield-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const particles = [];
-        const numParticles = 2000; // Increased for a denser ASCII effect
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:",.<>/?`~ ';
-        const asciiFontSize = 12;
-        
-        let centerX, centerY;
+        const stars = [];
+        const numStars = 800;
 
-        class Particle {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.vx = (Math.random() - 0.5) * 1; // Initial random velocity
-                this.vy = (Math.random() - 0.5) * 1;
-                this.char = chars[Math.floor(Math.random() * chars.length)];
-                this.opacity = Math.random() * 0.4 + 0.1; // Dimmer opacity
-                this.color = `rgba(0, 80, 0, ${this.opacity})`; // Dim green
-                this.size = Math.random() * 0.8 + 0.2; // Use for speed variation
-            }
-
-            update() {
-                // Apply a subtle pull towards the center to create a swirling effect
-                const dx = centerX - this.x;
-                const dy = centerY - this.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                
-                // Rotational force component (swirl)
-                this.vx += (dy / dist) * 0.005 * this.size;
-                this.vy += (-dx / dist) * 0.005 * this.size;
-
-                // Dampen velocity to prevent infinite acceleration
-                this.vx *= 0.99;
-                this.vy *= 0.99;
-
-                this.x += this.vx;
-                this.y += this.vy;
-
-                // Wrap around edges
-                if (this.x < -asciiFontSize) this.x = canvas.width;
-                if (this.x > canvas.width + asciiFontSize) this.x = -asciiFontSize;
-                if (this.y < -asciiFontSize) this.y = canvas.height;
-                if (this.y > canvas.height + asciiFontSize) this.y = -asciiFontSize;
-            }
-
-            draw() {
-                ctx.fillStyle = this.color;
-                ctx.fillText(this.char, this.x, this.y);
-            }
-        }
-
-        function init() {
-            centerX = canvas.width / 2;
-            centerY = canvas.height / 2;
-            particles.length = 0;
-            ctx.font = `${asciiFontSize}px 'VT323', monospace`;
-            for (let i = 0; i < numParticles; i++) {
-                particles.push(new Particle());
-            }
+        for (let i = 0; i < numStars; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                z: Math.random() * canvas.width,
+                size: Math.random() * 2 + 1,
+            });
         }
 
         function animate() {
-            ctx.fillStyle = 'rgba(2, 3, 5, 0.1)'; // Clear with a slight fade
+            ctx.fillStyle = 'rgba(2, 3, 5, 0.15)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            particles.forEach(p => {
-                p.update();
-                p.draw();
-            });
+            ctx.fillStyle = 'rgba(176, 196, 222, 0.8)';
+            
+            for (let i = 0; i < numStars; i++) {
+                const star = stars[i];
+                star.z -= 1;
+
+                if (star.z <= 0) {
+                    star.z = canvas.width;
+                    star.x = Math.random() * canvas.width;
+                    star.y = Math.random() * canvas.height;
+                }
+
+                const x = (star.x - canvas.width / 2) * (canvas.width / star.z) + canvas.width / 2;
+                const y = (star.y - canvas.height / 2) * (canvas.width / star.z) + canvas.height / 2;
+                const radius = star.size * (canvas.width / star.z);
+
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
 
             requestAnimationFrame(animate);
         }
-
-        init();
+        
         animate();
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            // Re-initialize particles to adapt to new dimensions and recalculate center
-            init();
         });
     </script>
 </body>
