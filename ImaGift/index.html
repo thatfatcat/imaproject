@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Starlight Transmission</title>
+    <title>Digital Rain</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -30,7 +30,7 @@
             0%, 100% { background-position: 0 0, 0 0; }
             50% { background-position: 50% 50%, 10px 10px; }
         }
-        #starfield-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #binary-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
         .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
         h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
@@ -40,64 +40,59 @@
     </style>
 </head>
 <body>
-    <canvas id="starfield-canvas"></canvas>
+    <canvas id="binary-canvas"></canvas>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <p>
-        what is something that you really wanted to get into but just couldn't.</p>
+        <p>Yesterday I went to the store to get an airtag for my keys. When I got there I parked close to the car next to me (still within the lines). There was a woman in the car and she immediately started screaming at me to move. She then rolled down her window and started punching my window saying she's going to break it in. I immediately pulled out my phone to record and recorded her lisence plate, she came out of the car and said shes going to get me beat up and chased me into the store. She threw a huge tantrum in the store, but her boyfriend was there and had her calm down and walk to the car. However, when I walked out of the store he was waiting for me and walked me to his car cursing at me and borderline threatening me. Weird experience.</p>
     </div>
     <footer></footer>
     <script>
-        const canvas = document.getElementById('starfield-canvas');
+        const canvas = document.getElementById('binary-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const stars = [];
-        const numStars = 800;
+        const binary = "01";
+        const columns = canvas.width / 20; // Number of columns
+        const drops = []; // An array of drops, one for each column
 
-        for (let i = 0; i < numStars; i++) {
-            stars.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                z: Math.random() * canvas.width,
-                size: Math.random() * 2 + 1,
-            });
+        // Initialize drops to start at the top
+        for (let i = 0; i < columns; i++) {
+            drops[i] = 1;
         }
 
         function animate() {
-            ctx.fillStyle = 'rgba(2, 3, 5, 0.15)';
+            ctx.fillStyle = 'rgba(2, 3, 5, 0.05)'; // Fading effect
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.fillStyle = 'rgba(176, 196, 222, 0.8)';
-            
-            for (let i = 0; i < numStars; i++) {
-                const star = stars[i];
-                star.z -= 1;
+            ctx.fillStyle = '#3d8bff'; // Blue text
+            ctx.font = '20px VT323'; // Using VT323 font for binary rain
 
-                if (star.z <= 0) {
-                    star.z = canvas.width;
-                    star.x = Math.random() * canvas.width;
-                    star.y = Math.random() * canvas.height;
+            for (let i = 0; i < drops.length; i++) {
+                const text = binary.charAt(Math.floor(Math.random() * binary.length));
+                ctx.fillText(text, i * 20, drops[i] * 20);
+
+                // Sending the drop back to the top randomly after it has crossed the screen
+                if (drops[i] * 20 > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
                 }
-
-                const x = (star.x - canvas.width / 2) * (canvas.width / star.z) + canvas.width / 2;
-                const y = (star.y - canvas.height / 2) * (canvas.width / star.z) + canvas.height / 2;
-                const radius = star.size * (canvas.width / star.z);
-
-                ctx.beginPath();
-                ctx.arc(x, y, radius, 0, Math.PI * 2);
-                ctx.fill();
+                drops[i]++;
             }
 
             requestAnimationFrame(animate);
         }
-        
+
         animate();
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            // Re-initialize drops for new screen size
+            drops.length = 0;
+            const newColumns = canvas.width / 20;
+            for (let i = 0; i < newColumns; i++) {
+                drops[i] = 1;
+            }
         });
     </script>
 </body>
