@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600">
-    <title>Interactive Particle Field</title>
+    <title>Data Stream</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -30,7 +30,7 @@
             0%, 100% { background-position: 0 0, 0 0; }
             50% { background-position: 50% 50%, 10px 10px; }
         }
-        #three-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #particle-flow-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
         .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
         h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
@@ -40,95 +40,78 @@
     </style>
 </head>
 <body>
-    <div id="three-canvas"></div>
+    <canvas id="particle-flow-canvas"></canvas>
     <div class="container">
-        <h1>[Message_of_the_day]</h1>
-        <p>My officemate is leaving on Thursday and I wasn't aware of that. I don't know what I'll do without him. Him and boss had a huge fight today and it made me sad. On the bright side, I think we'll be done with the computer refresh by the end of this week largely thanks to his help. Not sure what well do with the rest of our summer. Tyler recommends I find a work related project as abstract as possible and shove myself in a corner where no one will ask me questions. Any suggestions?</p>
+        <h1>[message_of_the_day]</h1>
+        <p>Dimitri told me hes finally after his many threats moving to another state. He's going to Wisconsin. I think I'm fine with that. I'll miss him so much but as long as we have a similar timezone we'll still talk almost every day. I need to solidify the Europe plans though becuase I'm not sure how serious everyone is and its probably time to buy tickets.</p>
     </div>
     <footer></footer>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        let scene, camera, renderer, particles;
-        const mouse = new THREE.Vector2();
+        const canvas = document.getElementById('particle-flow-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        function init() {
-            // Scene
-            scene = new THREE.Scene();
+        const particles = [];
+        const numParticles = 300;
 
-            // Camera
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 300;
-
-            // Renderer
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setClearColor(0x000000, 0);
-            document.getElementById('three-canvas').appendChild(renderer.domElement);
-
-            // Particles
-            const geometry = new THREE.BufferGeometry();
-            const vertices = [];
-            for (let i = 0; i < 5000; i++) {
-                const x = (Math.random() - 0.5) * 1000;
-                const y = (Math.random() - 0.5) * 1000;
-                const z = (Math.random() - 0.5) * 1000;
-                vertices.push(x, y, z);
+        class Particle {
+            constructor() {
+                this.x = -Math.random() * canvas.width; // Start off-screen to the left
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 1;
+                this.speed = Math.random() * 0.5 + 0.1; // Speed from left to right
+                this.opacity = Math.random() * 0.7 + 0.3;
+                this.colorHue = Math.random() * 360; // Random hue for subtle color shifts
             }
-            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-            
-            const material = new THREE.PointsMaterial({
-                color: 0x3d8bff,
-                size: 2,
-                blending: THREE.AdditiveBlending,
-                transparent: true
-            });
-            particles = new THREE.Points(geometry, material);
-            scene.add(particles);
 
-            // Mouse listener
-            document.addEventListener('mousemove', onMouseMove, false);
+            update() {
+                this.x += this.speed;
+                if (this.x > canvas.width + this.size) { // Reset when off-screen to the right
+                    this.x = -this.size; // Reset to left
+                    this.y = Math.random() * canvas.height;
+                    this.size = Math.random() * 2 + 1;
+                    this.speed = Math.random() * 0.5 + 0.1;
+                    this.opacity = Math.random() * 0.7 + 0.3;
+                    this.colorHue = Math.random() * 360;
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                // Subtle color shift
+                ctx.fillStyle = `hsla(${this.colorHue}, 70%, 50%, ${this.opacity})`;
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
 
-        function onMouseMove(event) {
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        function init() {
+            particles.length = 0;
+            for (let i = 0; i < numParticles; i++) {
+                particles.push(new Particle());
+            }
         }
 
         function animate() {
+            ctx.fillStyle = 'rgba(2, 3, 5, 0.1)'; // Clear with a slight fade
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
             requestAnimationFrame(animate);
-            
-            // Interaction logic
-            const positions = particles.geometry.attributes.position.array;
-            const force = 100;
-            const mouse3D = new THREE.Vector3(mouse.x * (window.innerWidth/2), mouse.y * (window.innerHeight/2), 0);
-            camera.localToWorld(mouse3D);
-
-
-            for (let i = 0; i < positions.length; i += 3) {
-                const particle = new THREE.Vector3(positions[i], positions[i+1], positions[i+2]);
-                const distance = particle.distanceTo(mouse3D);
-                
-                if (distance < force) {
-                    const direction = particle.sub(mouse3D).normalize();
-                    positions[i] += direction.x * (force - distance) * 0.1;
-                    positions[i+1] += direction.y * (force - distance) * 0.1;
-                }
-            }
-            particles.geometry.attributes.position.needsUpdate = true;
-            
-            // Scene rotation
-            scene.rotation.y += 0.0005;
-
-            renderer.render(scene, camera);
         }
 
         init();
         animate();
 
         window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init(); // Re-initialize particles for new screen size
         });
     </script>
 </body>
