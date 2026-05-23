@@ -3,148 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="3600">
-    <title>Animation 20</title>
+    <meta http-equiv="refresh" content="3600"> <!-- Refresh every hour -->
+    <title>Errant Pixels - Animation 68</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #000000;
-            --main-text-color: #f0f0f0;
-            --accent-color: #ffffff;
-            --secondary-text-color: #cccccc;
+            --background-color: #020305;
+            --main-text-color: #b0c4de;
+            --accent-color: #3d8bff;
+            --secondary-text-color: #6a7380;
+            --scanline-opacity: 0.05;
+            --noise-opacity: 0.03;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
         body, html {
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
-            overflow: hidden;
+            line-height: 1.7; overflow: hidden;
+            background-image:
+                radial-gradient(ellipse at center, rgba(176, 196, 222, 0.03), transparent 80%),
+                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, var(--scanline-opacity)) 1px, rgba(255, 255, 255, var(--scanline-opacity)) 2px);
+            animation: noise 1s steps(2) infinite;
         }
-        #tunnel-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
+        @keyframes noise {
+            0%, 100% { background-position: 0 0, 0 0; }
+            50% { background-position: 50% 50%, 10px 10px; }
         }
-        .container, footer {
-            position: relative;
-            z-index: 1;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 4vw;
-            min-height: 90vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-        h1 {
-            font-family: var(--font-display);
-            font-size: 3rem;
-            color: var(--accent-color);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: normal;
-            margin-bottom: 1.5rem;
-            text-shadow: 0 0 10px var(--accent-color);
-        }
-        p {
-            margin-bottom: 1.5rem;
-            width: 100%;
-            max-width: 600px;
-        }
-        footer {
-            text-align: center;
-            padding: 2rem 0;
-            font-size: 0.9rem;
-            color: var(--secondary-text-color);
-            margin-top: auto;
-            width: 100%;
-        }
+        #animation-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .container, footer { position: relative; z-index: 1; }
+        .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
+        h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
+        p { margin-bottom: 1.5rem; width: 100%; }
+        footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
+        @media (max-width: 768px) { h1 { font-size: 2rem; } }
     </style>
 </head>
 <body>
-    <canvas id="tunnel-canvas"></canvas>
+    <canvas id="animation-canvas"></canvas>
     <div class="container">
-        <h1>[Message_of_the_day]</h1>
-        <p>I'm still feeling sick. I couldn't do much physical activity today, I had to use a golf cart to get around. It's so out of nowhere. Its almost like a panic attack but without my stomach being involved.</p>
+        <h1>[message_of_the_day]</h1>
+        <p>I've been getting back into counter strike lately, and a big world championship is coming up for me to watch. We agreed as a group to all do a watch party, at least for the finals. I'm excited about it. In other news I felt completely fine today after getting a full nights sleep. Also, I planted some onions outside.</p>
     </div>
     <footer><p>
-
     <script>
-        const canvas = document.getElementById('tunnel-canvas');
+        const canvas = document.getElementById('animation-canvas');
         const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        let stars = [];
-        const numStars = 800; // Increased star count for a fuller effect
-        let centerX, centerY, maxRadius;
+        const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-=_+[]{}|;:,.<>/?';
+        const fontSize = 14;
+        const particles = [];
+        const maxParticles = 100;
+        const colors = ['#b0c4de', '#3d8bff', '#add8e6', '#c0c0c0', '#ffffff'];
 
-        function initializeStars() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            centerX = canvas.width / 2;
-            centerY = canvas.height / 2;
-            maxRadius = Math.sqrt(centerX * centerX + centerY * centerY);
-            stars = [];
-            for (let i = 0; i < numStars; i++) {
-                stars.push(createStar());
+        class Particle {
+            constructor(x, y) {
+                this.x = x || Math.random() * canvas.width;
+                this.y = y || Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.char = characters[Math.floor(Math.random() * characters.length)];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.opacity = 1;
+                this.life = Math.random() * 60 + 30; // lifespan in frames
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Add random perturbation for "walk" effect
+                this.vx += (Math.random() - 0.5) * 0.5;
+                this.vy += (Math.random() - 0.5) * 0.5;
+
+                // Clamp velocity
+                this.vx = Math.max(-2, Math.min(2, this.vx));
+                this.vy = Math.max(-2, Math.min(2, this.vy));
+
+                // Bounce off edges
+                if (this.x < 0 || this.x > canvas.width) {
+                    this.vx *= -1;
+                    this.x = Math.max(0, Math.min(canvas.width, this.x)); // Clamp to stay within bounds
+                }
+                if (this.y < 0 || this.y > canvas.height) {
+                    this.vy *= -1;
+                    this.y = Math.max(0, Math.min(canvas.height, this.y)); // Clamp to stay within bounds
+                }
+                
+                this.opacity -= 1 / this.life; // Fade out over life
+            }
+
+            draw() {
+                ctx.fillStyle = this.color.replace('rgb', 'rgba').replace(')', `, ${this.opacity})`);
+                ctx.fillText(this.char, this.x, this.y);
             }
         }
 
-        function createStar() {
-            return {
-                angle: Math.random() * Math.PI * 2,
-                radius: Math.random() * 2, // Start near the center
-                speed: Math.random() * 2 + 1
-            };
-        }
-
-        function draw() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // Fading effect
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            stars.forEach(star => {
-                // Update star position
-                star.radius += star.speed;
-
-                if (star.radius >= maxRadius) {
-                    // Reset star
-                    star.radius = 0;
-                    star.speed = Math.random() * 2 + 1;
-                }
-
-                const progress = star.radius / maxRadius;
-                const x = centerX + Math.cos(star.angle) * star.radius;
-                const y = centerY + Math.sin(star.angle) * star.radius;
-
-                // Calculate previous position for the trail
-                const prevRadius = Math.max(0, star.radius - (star.speed * 5)); // Trail length based on speed
-                const prevX = centerX + Math.cos(star.angle) * prevRadius;
-                const prevY = centerY + Math.sin(star.angle) * prevRadius;
-                
-                // Draw the streak
-                ctx.beginPath();
-                ctx.moveTo(prevX, prevY);
-                ctx.lineTo(x, y);
-                ctx.lineWidth = 1 + progress * 2.5; // Line gets thicker as it moves out
-                ctx.strokeStyle = `rgba(255, 255, 255, ${progress})`; // Line fades in
-                ctx.stroke();
-            });
+        function spawnParticle() {
+            if (particles.length < maxParticles) {
+                particles.push(new Particle());
+            }
         }
 
         function animate() {
-            draw();
+            ctx.fillStyle = 'rgba(2, 3, 5, 0.1)'; // Low alpha for trails
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.font = `${fontSize}px var(--font-display)`;
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                p.draw();
+
+                if (p.opacity <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            if (Math.random() < 0.1) { // Probability of spawning a new particle each frame
+                spawnParticle();
+            }
+
             requestAnimationFrame(animate);
         }
+        
+        // Initial particles
+        for(let i = 0; i < maxParticles / 2; i++) {
+            spawnParticle();
+        }
 
-        window.addEventListener('resize', initializeStars);
-        initializeStars();
         animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            // Clear existing particles and respawn some for clean resize
+            particles.length = 0;
+            for(let i = 0; i < maxParticles / 2; i++) {
+                spawnParticle();
+            }
+        });
     </script>
 </body>
 </html>
