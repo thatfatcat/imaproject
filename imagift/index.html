@@ -3,166 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="3600">
-    <title>Animation 12</title>
+    <meta http-equiv="refresh" content="3600"> <!-- Refresh every hour -->
+    <title>Hyperspace Drift - Animation 77</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #000000;
-            --main-text-color: #f0f0f0;
-            --accent-color: #00ff00; /* Bright green for the snake */
-            --secondary-text-color: #aaccaa;
+            --background-color: #020305;
+            --main-text-color: #b0c4de;
+            --accent-color: #3d8bff;
+            --secondary-text-color: #6a7380;
+            --scanline-opacity: 0.05;
+            --noise-opacity: 0.03;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
         body, html {
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
-            overflow: hidden;
+            line-height: 1.7; overflow: hidden;
+            background-image:
+                radial-gradient(ellipse at center, rgba(176, 196, 222, 0.03), transparent 80%),
+                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, var(--scanline-opacity)) 1px, rgba(255, 255, 255, var(--scanline-opacity)) 2px);
+            animation: noise 1s steps(2) infinite;
         }
-        #snake-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
+        @keyframes noise {
+            0%, 100% { background-position: 0 0, 0 0; }
+            50% { background-position: 50% 50%, 10px 10px; }
         }
-        .container, footer {
-            position: relative;
-            z-index: 1;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 4vw;
-            min-height: 90vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-        h1 {
-            font-family: var(--font-display);
-            font-size: 3rem;
-            color: var(--accent-color);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: normal;
-            margin-bottom: 1.5rem;
-            text-shadow: 0 0 10px var(--accent-color);
-        }
-        p {
-            margin-bottom: 1.5rem;
-            width: 100%;
-            max-width: 600px;
-        }
-        footer {
-            text-align: center;
-            padding: 2rem 0;
-            font-size: 0.9rem;
-            color: var(--secondary-text-color);
-            margin-top: auto;
-            width: 100%;
-        }
+        #animation-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .container, footer { position: relative; z-index: 1; }
+        .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
+        h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
+        p { margin-bottom: 1.5rem; width: 100%; }
+        footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
+        @media (max-width: 768px) { h1 { font-size: 2rem; } }
     </style>
 </head>
 <body>
-    <canvas id="snake-canvas"></canvas>
+    <canvas id="animation-canvas"></canvas>
     <div class="container">
-        <h1>[Message_Of_The_day]</h1>
-        <p>This long weekend did wonders to my mental health. I feel so much better. Tomorrow will be difficult with my messed up sleep schedule but I think I'll come back refreshed and manage well. I think my overall mental health has been really good as of late. I've been very excited about things and my relationships have been strong. Also I forgot Justin's birthday yesterday and I feel awful.</p>
+        <h1>Message_of_the_day</h1>
+        <p>Work is torture now that Guy is gone, but I'm feeling motivated to do things for myself and find projects. Currently I'm looking at making a wooden/3d printed yu-gi-oh playmat combining my 3d printer and my work lasercutter. This is a precursor for eventually making designs for the coffee table I will hopefully make.</p>
     </div>
     <footer><p>
-
     <script>
-        const canvas = document.getElementById('snake-canvas');
+        const canvas = document.getElementById('animation-canvas');
         const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        const gridSize = 20;
-        let snake;
-        let frameCount = 0;
+        const characters = '.,*+';
+        const numStars = 500;
+        const stars = [];
+        const baseSpeed = 0.5;
 
-        function initializeSnake() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            snake = {
-                body: [{ x: 10, y: 10 }],
-                dx: 1,
-                dy: 0,
-                length: 5,
-                character: '#'
-            };
-        }
-
-        function draw() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // Fading trail effect
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Draw faint grid
-            ctx.strokeStyle = `rgba(${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--accent-color').slice(1,3), 16)}, ${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--accent-color').slice(3,5), 16)}, ${parseInt(getComputedStyle(document.documentElement).getPropertyValue('--accent-color').slice(5,7), 16)}, 0.05)`; // Very faint accent color
-            ctx.lineWidth = 1;
-            for (let x = 0; x < canvas.width; x += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
-                ctx.stroke();
-            }
-            for (let y = 0; y < canvas.height; y += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
-                ctx.stroke();
+        class Star {
+            constructor() {
+                this.reset();
             }
 
-            const head = snake.body[0];
-            let newHead = { x: head.x + snake.dx, y: head.y + snake.dy };
-
-            // Wall collision and wrapping
-            if (newHead.x * gridSize > canvas.width) newHead.x = 0;
-            if (newHead.x < 0) newHead.x = Math.floor(canvas.width / gridSize);
-            if (newHead.y * gridSize > canvas.height) newHead.y = 0;
-            if (newHead.y < 0) newHead.y = Math.floor(canvas.height / gridSize);
-
-            snake.body.unshift(newHead);
-
-            if (snake.body.length > snake.length) {
-                snake.body.pop();
+            reset() {
+                this.x = Math.random() * canvas.width - canvas.width / 2;
+                this.y = Math.random() * canvas.height - canvas.height / 2;
+                this.z = Math.random() * canvas.width; // Depth
+                this.char = characters[Math.floor(Math.random() * characters.length)];
+                this.ox = this.x; // Original x for perspective calculation
+                this.oy = this.y; // Original y for perspective calculation
             }
 
-            // Change direction randomly
-            if (frameCount % 10 === 0 && Math.random() < 0.5) {
-                const directions = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-                const [newDx, newDy] = directions[Math.floor(Math.random() * directions.length)];
-                if (newDx !== -snake.dx && newDy !== -snake.dy) { // Prevent reversing
-                    snake.dx = newDx;
-                    snake.dy = newDy;
+            update() {
+                this.z -= baseSpeed;
+
+                if (this.z < 1) { // Star has passed, reset
+                    this.reset();
                 }
             }
 
-            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
-            ctx.font = `${gridSize}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
+            draw() {
+                const sx = (this.x / this.z) * canvas.width + canvas.width / 2;
+                const sy = (this.y / this.z) * canvas.height + canvas.height / 2;
+                const size = (1 - this.z / canvas.width) * 5; // Scale size with depth
+                const opacity = Math.max(0.1, 1 - this.z / canvas.width); // Fade with depth
 
-            snake.body.forEach(segment => {
-                ctx.fillText(snake.character, segment.x * gridSize, segment.y * gridSize);
-            });
+                ctx.fillStyle = `rgba(61, 139, 255, ${opacity})`; // Using accent color
+                ctx.font = `${size}px var(--font-display)`;
+                ctx.fillText(this.char, sx, sy);
+            }
+        }
+
+        function initStars() {
+            for (let i = 0; i < numStars; i++) {
+                stars.push(new Star());
+            }
         }
 
         function animate() {
-            frameCount++;
-            // Slow down the animation
-            setTimeout(() => {
-                draw();
-                requestAnimationFrame(animate);
-            }, 100);
-        }
+            ctx.fillStyle = 'rgba(2, 3, 5, 0.1)'; // Clear with low alpha for trails
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        window.addEventListener('resize', initializeSnake);
-        initializeSnake();
+            stars.forEach(star => {
+                star.update();
+                star.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+        
+        initStars();
         animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            stars.length = 0; // Clear and re-init stars on resize
+            initStars();
+        });
     </script>
 </body>
 </html>
