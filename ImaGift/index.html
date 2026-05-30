@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600"> <!-- Refresh every hour -->
-    <title>Confluence - Animation 78</title>
+    <title>Ephemeral Paths - Animation 79</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #020305;
+            --background-color: #000000;
             --main-text-color: #b0c4de;
             --accent-color: #3d8bff;
             --secondary-text-color: #6a7380;
@@ -21,10 +21,6 @@
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             line-height: 1.7; overflow: hidden;
-            background-image:
-                radial-gradient(ellipse at center, rgba(176, 196, 222, 0.03), transparent 80%),
-                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, var(--scanline-opacity)) 1px, rgba(255, 255, 255, var(--scanline-opacity)) 2px);
-            animation: noise 1s steps(2) infinite;
         }
         @keyframes noise {
             0%, 100% { background-position: 0 0, 0 0; }
@@ -43,7 +39,7 @@
     <canvas id="animation-canvas"></canvas>
     <div class="container">
         <h1>[message_of_the_day]</h1>
-        <p>I've noticed about myself recently that I have a hard time interacting with people when only I gain things from the interaction. For example if I ran into the president of my school I wouldn't know how to interact with him. He has no reason to be nice to me or like me, so I end up just leaving people alone. I wish I was better at this. This isn't to be confused with a problem with authority, I have no problems with authority, but just anyone that isn't getting something from me. Another example is Sarah's friends. I don't know how to interact with them because socially im entirely indebted to them and they owe me nothing. It's hard to explain.</p>
+        <p>Today I went to the presidents home to setup his computer for retirement. I ended talking to his wife a lot and we played wordle and connections together. Then I accidentally completely shut off wifi in the house and had to set up all the routers from scratch. Nobody noticed for now, but many things will start to pop up with errors, so I'll probably have to go back on Monday.</p>
     </div>
     <footer><p>
     <script>
@@ -52,102 +48,115 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const characters = '/*-+_=@#$%&';
-        const fontSize = 14;
-        const particles = [];
-        const maxParticles = 300;
-        const center = { x: canvas.width / 2, y: canvas.height / 2 };
-        const particleSpeed = 0.5;
+        const headCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const trailCharacters = '.,-;:_';
+        const fontSize = 18;
+        const leaders = [];
+        const numLeaders = 3; // Number of leading characters
+        const leaderSpeed = 2; // Speed of leaders
+        const trailLength = 50; // Max segments in trail
+        const trailFadeSpeed = 0.02;
 
-        class Particle {
-            constructor() {
-                this.reset();
+        const colors = ['#ffffff', '#e0e0e0', '#c0c0c0'];
+
+        class TrailSegment {
+            constructor(x, y, char, color, opacity) {
+                this.x = x;
+                this.y = y;
+                this.char = char;
+                this.color = color;
+                this.opacity = opacity;
             }
 
-            reset() {
-                // Spawn from a random edge
-                const edge = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
-                if (edge === 0) { // Top
-                    this.x = Math.random() * canvas.width;
-                    this.y = 0;
-                } else if (edge === 1) { // Right
-                    this.x = canvas.width;
-                    this.y = Math.random() * canvas.height;
-                } else if (edge === 2) { // Bottom
-                    this.x = Math.random() * canvas.width;
-                    this.y = canvas.height;
-                } else { // Left
-                    this.x = 0;
-                    this.y = Math.random() * canvas.height;
-                }
+            update() {
+                this.opacity -= trailFadeSpeed;
+            }
 
-                this.char = characters[Math.floor(Math.random() * characters.length)];
-                this.opacity = 1;
+            draw() {
+                ctx.fillStyle = this.color.replace('rgb', 'rgba').replace(')', `, ${this.opacity})`);
+                ctx.fillText(this.char, this.x, this.y);
+            }
+        }
 
-                // Calculate initial velocity towards center
-                const angle = Math.atan2(center.y - this.y, center.x - this.x);
-                this.vx = Math.cos(angle) * particleSpeed * (Math.random() * 0.5 + 0.75);
-                this.vy = Math.sin(angle) * particleSpeed * (Math.random() * 0.5 + 0.75);
+        class Leader {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * leaderSpeed * 2;
+                this.vy = (Math.random() - 0.5) * leaderSpeed * 2;
+                this.headChar = headCharacters[Math.floor(Math.random() * headCharacters.length)];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.trail = [];
             }
 
             update() {
                 this.x += this.vx;
                 this.y += this.vy;
 
-                // Gradually steer towards center (simple attraction)
-                const dx = center.x - this.x;
-                const dy = center.y - this.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-
-                if (dist < 50) { // Near center, fade out
-                    this.opacity -= 0.02;
-                } else {
-                    const steerForce = 0.005; // How strongly it steers to center
-                    this.vx += (dx / dist) * steerForce;
-                    this.vy += (dy / dist) * steerForce;
+                // Bounce off edges
+                if (this.x < 0 || this.x > canvas.width - fontSize) {
+                    this.vx *= -1;
+                    this.x = Math.max(0, Math.min(canvas.width - fontSize, this.x));
                 }
-                
-                // Reset if faded out or too far past center
-                if (this.opacity <= 0 || (dist < 5 && this.opacity < 0.5)) {
-                    this.reset();
+                if (this.y < fontSize || this.y > canvas.height) {
+                    this.vy *= -1;
+                    this.y = Math.max(fontSize, Math.min(canvas.height, this.y));
+                }
+
+                // Add new trail segment
+                this.trail.push(new TrailSegment(this.x, this.y, trailCharacters[Math.floor(Math.random() * trailCharacters.length)], this.color, 1));
+
+                // Update and prune trail
+                for (let i = this.trail.length - 1; i >= 0; i--) {
+                    this.trail[i].update();
+                    if (this.trail[i].opacity <= 0) {
+                        this.trail.splice(i, 1);
+                    }
                 }
             }
 
             draw() {
-                ctx.fillStyle = `rgba(176, 196, 222, ${this.opacity})`; // Use main-text-color
-                ctx.fillText(this.char, this.x, this.y);
+                // Draw trail segments
+                this.trail.forEach(segment => {
+                    segment.draw();
+                });
+
+                // Draw leader head
+                ctx.fillStyle = this.color;
+                ctx.fillText(this.headChar, this.x, this.y);
             }
         }
 
-        function initParticles() {
-            for (let i = 0; i < maxParticles; i++) {
-                particles.push(new Particle());
+        function initLeaders() {
+            for (let i = 0; i < numLeaders; i++) {
+                leaders.push(new Leader());
             }
         }
 
         function animate() {
-            ctx.fillStyle = 'rgba(2, 3, 5, 0.1)'; // Clear with low alpha for trails
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear completely
+            ctx.fillStyle = '#000000'; // Re-draw background with hardcoded black
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+
             ctx.font = `${fontSize}px var(--font-display)`;
 
-            particles.forEach(p => {
-                p.update();
-                p.draw();
+            leaders.forEach(leader => {
+                leader.update();
+                leader.draw();
             });
-            
+
             requestAnimationFrame(animate);
         }
         
-        initParticles();
+        initLeaders();
         animate();
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            center.x = canvas.width / 2;
-            center.y = canvas.height / 2;
-            particles.length = 0;
-            initParticles();
+            // Clear and re-init leaders to adapt to new size, or adjust their positions
+            leaders.length = 0;
+            initLeaders();
         });
     </script>
 </body>
