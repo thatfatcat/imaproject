@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600"> <!-- Refresh every hour -->
-    <title>Ephemeral Paths - Animation 79</title>
+    <title>Grid Resonance - Animation 80</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #000000;
+            --background-color: #020305;
             --main-text-color: #b0c4de;
             --accent-color: #3d8bff;
             --secondary-text-color: #6a7380;
@@ -21,10 +21,11 @@
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             line-height: 1.7; overflow: hidden;
-        }
-        @keyframes noise {
-            0%, 100% { background-position: 0 0, 0 0; }
-            50% { background-position: 50% 50%, 10px 10px; }
+            background-image:
+                radial-gradient(ellipse at center, rgba(176, 196, 222, 0.01), transparent 80%),
+                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, var(--scanline-opacity)) 1px, rgba(255, 255, 255, var(--scanline-opacity)) 2px);
+            animation: noise 1s steps(2) infinite;
+            /* Removed background-image and animation: noise here for a clean background */
         }
         #animation-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
@@ -38,8 +39,8 @@
 <body>
     <canvas id="animation-canvas"></canvas>
     <div class="container">
-        <h1>[message_of_the_day]</h1>
-        <p>Today I went to the presidents home to setup his computer for retirement. I ended talking to his wife a lot and we played wordle and connections together. Then I accidentally completely shut off wifi in the house and had to set up all the routers from scratch. Nobody noticed for now, but many things will start to pop up with errors, so I'll probably have to go back on Monday.</p>
+        <h1>[Message_of_the_day]</h1>
+        <p>Today I went to my first in person yu gi oh event in a long time. It was really stressful but I won 3 out of my 4 games. I need to relax more and think about what I'm doing. I've also managed to make the gym a habit again I think. Good news all around. Hope you guys have a good day</p>
     </div>
     <footer><p>
     <script>
@@ -48,115 +49,56 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const headCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        const trailCharacters = '.,-;:_';
-        const fontSize = 18;
-        const leaders = [];
-        const numLeaders = 3; // Number of leading characters
-        const leaderSpeed = 2; // Speed of leaders
-        const trailLength = 50; // Max segments in trail
-        const trailFadeSpeed = 0.02;
+        const character = '█'; // Solid block character
+        const fontSize = 14;
+        let cols = Math.floor(canvas.width / fontSize);
+        let rows = Math.floor(canvas.height / fontSize);
+        let time = 0;
+        const pulseSpeed = 0.05; // Speed of the pulse wave
+        const pulseDensity = 0.2; // How close waves are
+        const center = { x: canvas.width / 2, y: canvas.height / 2 };
 
-        const colors = ['#ffffff', '#e0e0e0', '#c0c0c0'];
+        function drawGridPulse() {
+            ctx.fillStyle = '#000000'; // Ensure background is pure black
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.font = `${fontSize}px var(--font-display)`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
 
-        class TrailSegment {
-            constructor(x, y, char, color, opacity) {
-                this.x = x;
-                this.y = y;
-                this.char = char;
-                this.color = color;
-                this.opacity = opacity;
-            }
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    const cellX = x * fontSize + fontSize / 2;
+                    const cellY = y * fontSize + fontSize / 2;
 
-            update() {
-                this.opacity -= trailFadeSpeed;
-            }
+                    const distance = Math.sqrt(Math.pow(cellX - center.x, 2) + Math.pow(cellY - center.y, 2));
+                    
+                    // Create a sine wave based on distance and time
+                    const opacityWave = Math.sin(distance * pulseDensity + time * pulseSpeed);
+                    
+                    // Map sine wave (-1 to 1) to opacity (0 to 1)
+                    const opacity = ((opacityWave + 1) / 2) * 0.08;
 
-            draw() {
-                ctx.fillStyle = this.color.replace('rgb', 'rgba').replace(')', `, ${this.opacity})`);
-                ctx.fillText(this.char, this.x, this.y);
-            }
-        }
-
-        class Leader {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.vx = (Math.random() - 0.5) * leaderSpeed * 2;
-                this.vy = (Math.random() - 0.5) * leaderSpeed * 2;
-                this.headChar = headCharacters[Math.floor(Math.random() * headCharacters.length)];
-                this.color = colors[Math.floor(Math.random() * colors.length)];
-                this.trail = [];
-            }
-
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-
-                // Bounce off edges
-                if (this.x < 0 || this.x > canvas.width - fontSize) {
-                    this.vx *= -1;
-                    this.x = Math.max(0, Math.min(canvas.width - fontSize, this.x));
+                    ctx.fillStyle = `rgba(61, 139, 255, ${opacity})`; // Using var(--accent-color) equivalent
+                    ctx.fillText(character, cellX, cellY);
                 }
-                if (this.y < fontSize || this.y > canvas.height) {
-                    this.vy *= -1;
-                    this.y = Math.max(fontSize, Math.min(canvas.height, this.y));
-                }
-
-                // Add new trail segment
-                this.trail.push(new TrailSegment(this.x, this.y, trailCharacters[Math.floor(Math.random() * trailCharacters.length)], this.color, 1));
-
-                // Update and prune trail
-                for (let i = this.trail.length - 1; i >= 0; i--) {
-                    this.trail[i].update();
-                    if (this.trail[i].opacity <= 0) {
-                        this.trail.splice(i, 1);
-                    }
-                }
-            }
-
-            draw() {
-                // Draw trail segments
-                this.trail.forEach(segment => {
-                    segment.draw();
-                });
-
-                // Draw leader head
-                ctx.fillStyle = this.color;
-                ctx.fillText(this.headChar, this.x, this.y);
-            }
-        }
-
-        function initLeaders() {
-            for (let i = 0; i < numLeaders; i++) {
-                leaders.push(new Leader());
             }
         }
 
         function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear completely
-            ctx.fillStyle = '#000000'; // Re-draw background with hardcoded black
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.font = `${fontSize}px var(--font-display)`;
-
-            leaders.forEach(leader => {
-                leader.update();
-                leader.draw();
-            });
-
+            time++;
+            drawGridPulse();
             requestAnimationFrame(animate);
         }
         
-        initLeaders();
         animate();
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            // Clear and re-init leaders to adapt to new size, or adjust their positions
-            leaders.length = 0;
-            initLeaders();
+            cols = Math.floor(canvas.width / fontSize);
+            rows = Math.floor(canvas.height / fontSize);
+            center.x = canvas.width / 2;
+            center.y = canvas.height / 2;
         });
     </script>
 </body>
