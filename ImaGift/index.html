@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600"> <!-- Refresh every hour -->
-    <title>Grid Resonance - Animation 80</title>
+    <title>Falling Digits - Animation 81</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #020305;
+            --background-color: #000000;
             --main-text-color: #b0c4de;
             --accent-color: #3d8bff;
             --secondary-text-color: #6a7380;
@@ -21,11 +21,7 @@
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             line-height: 1.7; overflow: hidden;
-            background-image:
-                radial-gradient(ellipse at center, rgba(176, 196, 222, 0.01), transparent 80%),
-                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, var(--scanline-opacity)) 1px, rgba(255, 255, 255, var(--scanline-opacity)) 2px);
-            animation: noise 1s steps(2) infinite;
-            /* Removed background-image and animation: noise here for a clean background */
+            /* No background-image or animation: noise to ensure clean black background */
         }
         #animation-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
@@ -39,8 +35,8 @@
 <body>
     <canvas id="animation-canvas"></canvas>
     <div class="container">
-        <h1>[Message_of_the_day]</h1>
-        <p>Today I went to my first in person yu gi oh event in a long time. It was really stressful but I won 3 out of my 4 games. I need to relax more and think about what I'm doing. I've also managed to make the gym a habit again I think. Good news all around. Hope you guys have a good day</p>
+        <h1>[message_of_the_day]</h1>
+        <p>It's funny how different things affect people differently. The ramen spilling on my desk yesterday is in the top 10 worst things that have ever happened to me and I'm not even kidding. I'm so lucky to have my life, where I can say that. I hope I'm not wasting it.</p>
     </div>
     <footer><p>
     <script>
@@ -49,44 +45,46 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const character = '█'; // Solid block character
-        const fontSize = 14;
+        const characters = '0123456789ABCDEF'; // Hexadecimal characters for a digital feel
+        const fontSize = 16;
         let cols = Math.floor(canvas.width / fontSize);
-        let rows = Math.floor(canvas.height / fontSize);
-        let time = 0;
-        const pulseSpeed = 0.05; // Speed of the pulse wave
-        const pulseDensity = 0.2; // How close waves are
-        const center = { x: canvas.width / 2, y: canvas.height / 2 };
+        const drops = []; // Stores the y-position of each falling character in a column
 
-        function drawGridPulse() {
-            ctx.fillStyle = '#000000'; // Ensure background is pure black
+        // Initialize drops to start at random positions at the top
+        for (let i = 0; i < cols; i++) {
+            drops[i] = Math.random() * canvas.height;
+        }
+
+        function getRandomChar() {
+            return characters[Math.floor(Math.random() * characters.length)];
+        }
+
+        function drawFallingCharacters() {
+            ctx.fillStyle = '#000000'; // Pure black background
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
             ctx.font = `${fontSize}px var(--font-display)`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#00FF00'; // Bright green for clear visibility
 
-            for (let y = 0; y < rows; y++) {
-                for (let x = 0; x < cols; x++) {
-                    const cellX = x * fontSize + fontSize / 2;
-                    const cellY = y * fontSize + fontSize / 2;
+            for (let i = 0; i < drops.length; i++) {
+                const char = getRandomChar();
+                const x = i * fontSize;
+                const y = drops[i];
 
-                    const distance = Math.sqrt(Math.pow(cellX - center.x, 2) + Math.pow(cellY - center.y, 2));
-                    
-                    // Create a sine wave based on distance and time
-                    const opacityWave = Math.sin(distance * pulseDensity + time * pulseSpeed);
-                    
-                    // Map sine wave (-1 to 1) to opacity (0 to 1)
-                    const opacity = ((opacityWave + 1) / 2) * 0.08;
+                ctx.fillText(char, x, y);
 
-                    ctx.fillStyle = `rgba(61, 139, 255, ${opacity})`; // Using var(--accent-color) equivalent
-                    ctx.fillText(character, cellX, cellY);
+                // Move character down
+                drops[i] += fontSize; // Move by one character height
+
+                // If character is off-screen, reset to top at a random x
+                if (drops[i] > canvas.height && Math.random() > 0.95) { // Add a little randomness to when it resets
+                    drops[i] = 0;
                 }
             }
         }
 
         function animate() {
-            time++;
-            drawGridPulse();
+            drawFallingCharacters();
             requestAnimationFrame(animate);
         }
         
@@ -96,9 +94,11 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             cols = Math.floor(canvas.width / fontSize);
-            rows = Math.floor(canvas.height / fontSize);
-            center.x = canvas.width / 2;
-            center.y = canvas.height / 2;
+            // Re-initialize drops for new width
+            drops.length = 0;
+            for (let i = 0; i < cols; i++) {
+                drops[i] = Math.random() * canvas.height;
+            }
         });
     </script>
 </body>
