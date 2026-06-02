@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600"> <!-- Refresh every hour -->
-    <title>Falling Digits - Animation 81</title>
+    <title>Pattern Metamorphosis - Animation 82</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -35,8 +35,8 @@
 <body>
     <canvas id="animation-canvas"></canvas>
     <div class="container">
-        <h1>[message_of_the_day]</h1>
-        <p>It's funny how different things affect people differently. The ramen spilling on my desk yesterday is in the top 10 worst things that have ever happened to me and I'm not even kidding. I'm so lucky to have my life, where I can say that. I hope I'm not wasting it.</p>
+        <h1>[Message_of_the_day]</h1>
+        <p>Thorfinn has been acting up a lot. I got a cocoon with a butterfly from my therapist but he killed the butterfly. He pissed on my bed last night. He ripped open the lanai but Sophie Justin and I fixed it</p>
     </div>
     <footer><p>
     <script>
@@ -45,46 +45,55 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const characters = '0123456789ABCDEF'; // Hexadecimal characters for a digital feel
+        const asciiPattern = [
+            "  ###  ",
+            " ##### ",
+            "#######",
+            " ##### ",
+            "  ###  "
+        ]; // A simple diamond pattern
         const fontSize = 16;
-        let cols = Math.floor(canvas.width / fontSize);
-        const drops = []; // Stores the y-position of each falling character in a column
+        let currentScale = 0.5; // Current scaling factor
+        const minScale = 0.5;
+        const maxScale = 2.0;
+        let scaleDirection = 1; // 1 for growing, -1 for shrinking
+        const scaleSpeed = 0.005; // Speed of scaling
 
-        // Initialize drops to start at random positions at the top
-        for (let i = 0; i < cols; i++) {
-            drops[i] = Math.random() * canvas.height;
-        }
+        const patternWidth = asciiPattern[0].length;
+        const patternHeight = asciiPattern.length;
 
-        function getRandomChar() {
-            return characters[Math.floor(Math.random() * characters.length)];
-        }
-
-        function drawFallingCharacters() {
+        function drawPattern() {
             ctx.fillStyle = '#000000'; // Pure black background
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            ctx.font = `${fontSize}px var(--font-display)`;
-            ctx.fillStyle = '#00FF00'; // Bright green for clear visibility
+            ctx.font = `${fontSize * currentScale}px var(--font-display)`; // Scale font size
+            ctx.fillStyle = '#FF0000'; // Use bright red for testing visibility
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
 
-            for (let i = 0; i < drops.length; i++) {
-                const char = getRandomChar();
-                const x = i * fontSize;
-                const y = drops[i];
+            const offsetX = (canvas.width / 2) - (patternWidth * fontSize * currentScale / 2);
+            const offsetY = (canvas.height / 2) - (patternHeight * fontSize * currentScale / 2);
 
-                ctx.fillText(char, x, y);
-
-                // Move character down
-                drops[i] += fontSize; // Move by one character height
-
-                // If character is off-screen, reset to top at a random x
-                if (drops[i] > canvas.height && Math.random() > 0.95) { // Add a little randomness to when it resets
-                    drops[i] = 0;
+            for (let y = 0; y < patternHeight; y++) {
+                for (let x = 0; x < patternWidth; x++) {
+                    const char = asciiPattern[y][x];
+                    if (char !== ' ') { // Only draw non-space characters
+                        ctx.fillText(char, offsetX + x * fontSize * currentScale + (fontSize * currentScale / 2), offsetY + y * fontSize * currentScale + (fontSize * currentScale / 2));
+                    }
                 }
             }
         }
 
         function animate() {
-            drawFallingCharacters();
+            currentScale += scaleDirection * scaleSpeed;
+
+            if (currentScale >= maxScale) {
+                scaleDirection = -1;
+            } else if (currentScale <= minScale) {
+                scaleDirection = 1;
+            }
+
+            drawPattern();
             requestAnimationFrame(animate);
         }
         
@@ -93,12 +102,8 @@
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            cols = Math.floor(canvas.width / fontSize);
-            // Re-initialize drops for new width
-            drops.length = 0;
-            for (let i = 0; i < cols; i++) {
-                drops[i] = Math.random() * canvas.height;
-            }
+            // Recalculate center
+            // currentScale doesn't need to be reset
         });
     </script>
 </body>
