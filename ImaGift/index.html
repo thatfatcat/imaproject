@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600"> <!-- Refresh every hour -->
-    <title>Wormhole Drift - Animation 83</title>
+    <title>Textual Instability</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -35,9 +35,9 @@
 <body>
     <canvas id="animation-canvas"></canvas>
     <div class="container">
-        <h1>[message_of_the_day]</h1>
-        <p>Question: Do you think you do the right thing because its the right thing to do, or because it makes you feel good to do the right thing?</p>
-        <p>Follow up question: Would you rather murder an inoccent person and not remember it, or have the memory of murdering an inoccent person when you haven't actually?</p>
+        <h1>[Message_of_the_day]</h1>
+        <p>New litterbox in room with uti detection, food and water in room, cat door unsealed, old sheets left in the open near washer.</p>
+        <p>This experiment can yield 4 different he could pee (from worst to best case scenarios): My bed, the sheets near the washer, the new litterbox, the litter robot.</p>
     </div>
     <footer><p>
     <script>
@@ -46,81 +46,97 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const asciiCharacters = ['-', '=', '#', 'o', '*', '+', '>', '<', '^', 'v', 'O'];
-        const baseFontSize = 16;
-        const rings = [];
-        const maxRings = 20;
-        const ringSpeed = 2; // How fast rings expand
-        const spawnInterval = 100; // Milliseconds between new ring spawns
-        let lastSpawnTime = 0;
+        const staticText = "Experiment #1";
+        const fontSize = 30;
+        const glitchFrames = 5; // How many frames a glitch lasts
+        const glitchOffsetMax = 5; // Max pixel offset for glitches
+        const glitchProbability = 0.005; // Chance per character per frame to glitch
 
-        class Ring {
-            constructor() {
-                this.init();
+        const textParticles = [];
+
+        class TextParticle {
+            constructor(char, x, y) {
+                this.char = char;
+                this.baseX = x;
+                this.baseY = y;
+                this.x = x;
+                this.y = y;
+                this.glitchTimer = 0;
+                this.glitchOffsetX = 0;
+                this.glitchOffsetY = 0;
             }
 
-            init() {
-                this.radius = 0;
-                this.char = asciiCharacters[Math.floor(Math.random() * asciiCharacters.length)];
-                this.opacity = 1;
-                this.speed = ringSpeed * (Math.random() * 0.5 + 0.75); // Slightly varied speed
-                this.color = `rgba(0, 255, 0, ${this.opacity})`; // Hardcoded bright green
+            resetGlitch() {
+                this.glitchTimer = 0;
+                this.glitchOffsetX = 0;
+                this.glitchOffsetY = 0;
+                this.x = this.baseX;
+                this.y = this.baseY;
+            }
+
+            applyGlitch() {
+                this.glitchTimer = glitchFrames;
+                this.glitchOffsetX = (Math.random() - 0.5) * glitchOffsetMax * 2;
+                this.glitchOffsetY = (Math.random() - 0.5) * glitchOffsetMax * 2;
+                this.x = this.baseX + this.glitchOffsetX;
+                this.y = this.baseY + this.glitchOffsetY;
             }
 
             update() {
-                this.radius += this.speed;
-                this.opacity -= 0.01; // Fade out
-
-                if (this.opacity < 0 || this.radius * baseFontSize > Math.max(canvas.width, canvas.height) * 0.7) {
-                    this.init(); // Reset if faded or too large
+                if (this.glitchTimer > 0) {
+                    this.glitchTimer--;
+                    if (this.glitchTimer === 0) {
+                        this.resetGlitch();
+                    }
+                } else if (Math.random() < glitchProbability) {
+                    this.applyGlitch();
                 }
-                this.color = `rgba(0, 255, 0, ${this.opacity})`; // Update color with new opacity
             }
 
             draw() {
-                ctx.font = `${baseFontSize}px 'VT323'`; // Hardcoded font
-                ctx.fillStyle = this.color;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-
-                const centerX = canvas.width / 2;
-                const centerY = canvas.height / 2;
-                const numChars = Math.floor(Math.PI * 2 * this.radius / baseFontSize); // Characters to form the circle
-
-                for (let i = 0; i < numChars; i++) {
-                    const angle = (i / numChars) * Math.PI * 2;
-                    const x = centerX + Math.cos(angle) * this.radius;
-                    const y = centerY + Math.sin(angle) * this.radius;
-                    ctx.fillText(this.char, x, y);
-                }
+                ctx.fillText(this.char, this.x, this.y);
             }
         }
 
-        function animate(currentTime) {
+        function initializeTextParticles() {
+            ctx.font = `${fontSize}px 'VT323'`; // For measuring text
+            const textWidth = ctx.measureText(staticText).width;
+            const startX = (canvas.width / 2) - (textWidth / 2);
+            const startY = (canvas.height / 2);
+
+            let currentX = startX;
+            for (let i = 0; i < staticText.length; i++) {
+                const char = staticText[i];
+                if (char !== ' ') { // Only create particle for non-space characters
+                    textParticles.push(new TextParticle(char, currentX, startY));
+                }
+                currentX += ctx.measureText(char).width; // Advance X for next character
+            }
+        }
+
+        function animate() {
             ctx.fillStyle = '#000000'; // Pure black background
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.font = `${fontSize}px 'VT323'`; // Hardcoded font
+            ctx.fillStyle = '#FFFFFF'; // White text for clear visibility
 
-            if (currentTime - lastSpawnTime > spawnInterval && rings.length < maxRings) {
-                rings.push(new Ring());
-                lastSpawnTime = currentTime;
-            }
-
-            for (let i = rings.length - 1; i >= 0; i--) {
-                const ring = rings[i];
-                ring.update();
-                ring.draw();
-            }
+            textParticles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
 
             requestAnimationFrame(animate);
         }
         
-        animate(0);
+        initializeTextParticles();
+        animate();
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            // Rings will reset themselves over time
-            rings.length = 0; // Clear existing rings
+            textParticles.length = 0; // Clear and re-initialize
+            initializeTextParticles();
         });
     </script>
 </body>
