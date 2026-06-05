@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="3600"> <!-- Refresh every hour -->
-    <title>Textual Instability</title>
+    <meta http-equiv="refresh" content="300"> <!-- Refresh every 5 minutes -->
+    <title>Labyrinthine Algorithms - Animation 85</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -25,9 +25,9 @@
         }
         #animation-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
-        .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
-        h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
-        p { margin-bottom: 1.5rem; width: 100%; }
+        .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; background-color: rgba(0, 0, 0, 0.5); border-radius: 5px; }
+        h1 { font-family: var(--font-display); font-size: 2.5rem; color: #FFFFFF; text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; text-shadow: 0 0 5px rgba(255,255,255,0.7); }
+        p { margin-bottom: 1.5rem; width: 100%; color: #E0E0E0; text-shadow: 0 0 3px rgba(255,255,255,0.5); }
         footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
         @media (max-width: 768px) { h1 { font-size: 2rem; } }
     </style>
@@ -35,9 +35,8 @@
 <body>
     <canvas id="animation-canvas"></canvas>
     <div class="container">
-        <h1>[Message_of_the_day]</h1>
-        <p>New litterbox in room with uti detection, food and water in room, cat door unsealed, old sheets left in the open near washer.</p>
-        <p>This experiment can yield 4 different he could pee (from worst to best case scenarios): My bed, the sheets near the washer, the new litterbox, the litter robot.</p>
+        <h1>[message_of_the_day]</h1>
+        <p>It's been a really bad few weeks for me. First joseph dies, then I find out Dimitri is leaving (for real this time), Thorfinn does his bed pissing thing, Pheobe has two lumps on her neck that have now exploded, Mitski suddenly lost all her weight out of nowhere, the car is broken, I got passed up for the promotion AND they're not replacing Guy, I've been having those health issues, and to wrap it all up I had a huge huge fight with Sarah. I know it's bad to look so directly at the negatives but I just need to write this down somewhere. I am just not catching a break right now.</p>
     </div>
     <footer><p>
     <script>
@@ -46,97 +45,137 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const staticText = "Experiment #1";
-        const fontSize = 30;
-        const glitchFrames = 5; // How many frames a glitch lasts
-        const glitchOffsetMax = 5; // Max pixel offset for glitches
-        const glitchProbability = 0.005; // Chance per character per frame to glitch
+        const fontSize = 12; // Smaller font for maze cells
+        let cols, rows;
+        let mazeGrid;
+        const WALL = 1;
+        const PATH = 0;
+        const WALL_CHARS_SET = ['#', '█', '▓', '▒', '@', '$', 'X']; // More varied wall characters
+        const PATH_CHARS_SET = [' ', '.', 'o', '+', '-', ':', '~']; // More varied path characters
+        const COLOR_WALL = '#3d8bff'; // Accent color
+        const COLOR_PATH = '#FFFFFF'; // White for path
 
-        const textParticles = [];
+        let stack = [];
+        let visitedCells; // Keep track of visited cells for generation
+        let currentCell;
+        let generationComplete = false;
+        const generationSpeed = 5; // How many steps per frame
 
-        class TextParticle {
-            constructor(char, x, y) {
-                this.char = char;
-                this.baseX = x;
-                this.baseY = y;
-                this.x = x;
-                this.y = y;
-                this.glitchTimer = 0;
-                this.glitchOffsetX = 0;
-                this.glitchOffsetY = 0;
-            }
+        function initMaze() {
+            cols = Math.floor(canvas.width / fontSize);
+            rows = Math.floor(canvas.height / fontSize);
 
-            resetGlitch() {
-                this.glitchTimer = 0;
-                this.glitchOffsetX = 0;
-                this.glitchOffsetY = 0;
-                this.x = this.baseX;
-                this.y = this.baseY;
-            }
+            // Ensure dimensions are odd for maze generation (cells + walls)
+            if (cols % 2 === 0) cols--;
+            if (rows % 2 === 0) rows--;
 
-            applyGlitch() {
-                this.glitchTimer = glitchFrames;
-                this.glitchOffsetX = (Math.random() - 0.5) * glitchOffsetMax * 2;
-                this.glitchOffsetY = (Math.random() - 0.5) * glitchOffsetMax * 2;
-                this.x = this.baseX + this.glitchOffsetX;
-                this.y = this.baseY + this.glitchOffsetY;
-            }
+            mazeGrid = new Array(rows).fill(null).map(() =>
+                new Array(cols).fill(WALL) // Start with all walls
+            );
+            visitedCells = new Array(rows).fill(null).map(() => new Array(cols).fill(false));
 
-            update() {
-                if (this.glitchTimer > 0) {
-                    this.glitchTimer--;
-                    if (this.glitchTimer === 0) {
-                        this.resetGlitch();
-                    }
-                } else if (Math.random() < glitchProbability) {
-                    this.applyGlitch();
+            // Start at a random odd cell
+            const startX = Math.floor(Math.random() * (cols / 2)) * 2 + 1;
+            const startY = Math.floor(Math.random() * (rows / 2)) * 2 + 1;
+            
+            currentCell = { x: startX, y: startY };
+            mazeGrid[startY][startX] = PATH;
+            visitedCells[startY][startX] = true;
+            stack.push(currentCell);
+            generationComplete = false;
+        }
+
+        function getUnvisitedNeighbors(cell) {
+            const neighbors = [];
+            // Only check actual cells, not wall rows/cols (hence +/-2)
+            const potentialNeighbors = [
+                { x: cell.x, y: cell.y - 2 }, // Up
+                { x: cell.x, y: cell.y + 2 }, // Down
+                { x: cell.x - 2, y: cell.y }, // Left
+                { x: cell.x + 2, y: cell.y }  // Right
+            ];
+
+            for (const n of potentialNeighbors) {
+                if (n.x >= 0 && n.x < cols && n.y >= 0 && n.y < rows && !visitedCells[n.y][n.x]) {
+                    neighbors.push(n);
                 }
             }
+            return neighbors;
+        }
 
-            draw() {
-                ctx.fillText(this.char, this.x, this.y);
+        function removeWall(cell1, cell2) {
+            const wallX = cell1.x + (cell2.x - cell1.x) / 2;
+            const wallY = cell1.y + (cell2.y - cell1.y) / 2;
+            mazeGrid[wallY][wallX] = PATH;
+        }
+
+        function generateMazeStep() {
+            if (stack.length === 0) {
+                generationComplete = true;
+                return;
+            }
+
+            for (let k = 0; k < generationSpeed && !generationComplete; k++) {
+                currentCell = stack[stack.length - 1]; // Peek at the top of the stack
+                const neighbors = getUnvisitedNeighbors(currentCell);
+
+                if (neighbors.length > 0) {
+                    const nextCell = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    removeWall(currentCell, nextCell);
+                    mazeGrid[nextCell.y][nextCell.x] = PATH;
+                    visitedCells[nextCell.y][nextCell.x] = true;
+                    stack.push(nextCell);
+                    currentCell = nextCell;
+                } else {
+                    stack.pop(); // Backtrack
+                }
             }
         }
 
-        function initializeTextParticles() {
-            ctx.font = `${fontSize}px 'VT323'`; // For measuring text
-            const textWidth = ctx.measureText(staticText).width;
-            const startX = (canvas.width / 2) - (textWidth / 2);
-            const startY = (canvas.height / 2);
-
-            let currentX = startX;
-            for (let i = 0; i < staticText.length; i++) {
-                const char = staticText[i];
-                if (char !== ' ') { // Only create particle for non-space characters
-                    textParticles.push(new TextParticle(char, currentX, startY));
-                }
-                currentX += ctx.measureText(char).width; // Advance X for next character
-            }
-        }
-
-        function animate() {
+        function drawMaze() {
             ctx.fillStyle = '#000000'; // Pure black background
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             ctx.font = `${fontSize}px 'VT323'`; // Hardcoded font
-            ctx.fillStyle = '#FFFFFF'; // White text for clear visibility
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
 
-            textParticles.forEach(particle => {
-                particle.update();
-                particle.draw();
-            });
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    const char = mazeGrid[y][x] === WALL
+                        ? WALL_CHARS_SET[Math.floor(Math.random() * WALL_CHARS_SET.length)]
+                        : PATH_CHARS_SET[Math.floor(Math.random() * PATH_CHARS_SET.length)];
+                    ctx.fillStyle = mazeGrid[y][x] === WALL ? COLOR_WALL : COLOR_PATH;
+                    ctx.fillText(char, x * fontSize, y * fontSize + fontSize); // +fontSize to offset for baseline
+                }
+            }
+        }
 
+        let restartTimer = null; // To hold the timeout ID
+
+        function animate() {
+            if (!generationComplete) {
+                generateMazeStep();
+            } else {
+                // Maze generation is complete, schedule a restart if not already scheduled
+                if (!restartTimer) {
+                    restartTimer = setTimeout(() => {
+                        initMaze(); // Reinitialize maze
+                        restartTimer = null; // Clear timer
+                    }, 2000); // Wait 2 seconds before restarting
+                }
+            }
+            drawMaze();
             requestAnimationFrame(animate);
         }
         
-        initializeTextParticles();
+        initMaze();
         animate();
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            textParticles.length = 0; // Clear and re-initialize
-            initializeTextParticles();
+            initMaze(); // Reinitialize maze on resize
         });
     </script>
 </body>
