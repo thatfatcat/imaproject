@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="300"> <!-- Refresh every 5 minutes -->
-    <title>Labyrinthine Algorithms - Animation 85</title>
+    <meta http-equiv="refresh" content="3600"> <!-- Refresh every hour -->
+    <title>Digital Embers - Animation 86</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -25,9 +25,9 @@
         }
         #animation-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
-        .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; background-color: rgba(0, 0, 0, 0.5); border-radius: 5px; }
-        h1 { font-family: var(--font-display); font-size: 2.5rem; color: #FFFFFF; text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; text-shadow: 0 0 5px rgba(255,255,255,0.7); }
-        p { margin-bottom: 1.5rem; width: 100%; color: #E0E0E0; text-shadow: 0 0 3px rgba(255,255,255,0.5); }
+        .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
+        h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
+        p { margin-bottom: 1.5rem; width: 100%; }
         footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
         @media (max-width: 768px) { h1 { font-size: 2rem; } }
     </style>
@@ -36,7 +36,7 @@
     <canvas id="animation-canvas"></canvas>
     <div class="container">
         <h1>[message_of_the_day]</h1>
-        <p>It's been a really bad few weeks for me. First joseph dies, then I find out Dimitri is leaving (for real this time), Thorfinn does his bed pissing thing, Pheobe has two lumps on her neck that have now exploded, Mitski suddenly lost all her weight out of nowhere, the car is broken, I got passed up for the promotion AND they're not replacing Guy, I've been having those health issues, and to wrap it all up I had a huge huge fight with Sarah. I know it's bad to look so directly at the negatives but I just need to write this down somewhere. I am just not catching a break right now.</p>
+        <p>I had a long walk with Joanne today. We talked about our personal lives and work. I think my plan is to go to different departments i've helped and get letters of recommendation, along with Joanne's, and take it directly to the VP. I'm scared and am not in the best mental space for all of this to be happening. I have a week or two to do this.</p>
     </div>
     <footer><p>
     <script>
@@ -45,137 +45,100 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const fontSize = 12; // Smaller font for maze cells
-        let cols, rows;
-        let mazeGrid;
-        const WALL = 1;
-        const PATH = 0;
-        const WALL_CHARS_SET = ['#', '█', '▓', '▒', '@', '$', 'X']; // More varied wall characters
-        const PATH_CHARS_SET = [' ', '.', 'o', '+', '-', ':', '~']; // More varied path characters
-        const COLOR_WALL = '#3d8bff'; // Accent color
-        const COLOR_PATH = '#FFFFFF'; // White for path
+        const fireChars = ['.', ',', '\'', '`', '^', '*', '~', '-', '=', '>', '<', '{', '}', '!', '/', '\\', 'o', '0', 'O'];
+        const fontSize = 30;
+        const fireParticles = [];
+        const maxFireParticles = 1200;
+        const spawnRate = 0.5; // Probability of spawning a new particle per frame
+        const fireColors = [
+            [255, 100, 0],   // Orange
+            [255, 165, 0],   // Lighter Orange
+            [255, 200, 0],   // Yellow
+            [200, 0, 0]      // Red
+        ];
 
-        let stack = [];
-        let visitedCells; // Keep track of visited cells for generation
-        let currentCell;
-        let generationComplete = false;
-        const generationSpeed = 5; // How many steps per frame
+        class FireParticle {
+            constructor() {
+                this.init();
+            }
 
-        function initMaze() {
-            cols = Math.floor(canvas.width / fontSize);
-            rows = Math.floor(canvas.height / fontSize);
+            init() {
+                this.x = canvas.width / 2 + (Math.random() - 0.5) * canvas.width * 0.4; // Further increased horizontal spread
+                this.y = canvas.height;
+                this.vx = (Math.random() - 0.5) * 1.5; // Horizontal wobble further increased
+                this.vy = - (Math.random() * 4 + 3); // Upward motion further increased
+                this.char = fireChars[Math.floor(Math.random() * fireChars.length)];
+                this.color = fireColors[Math.floor(Math.random() * fireColors.length)];
+                this.opacity = Math.random() * 0.5 + 0.5; // Initial opacity
+                this.life = Math.random() * 60 + 30; // Lifespan in frames
+                this.age = 0;
+            }
 
-            // Ensure dimensions are odd for maze generation (cells + walls)
-            if (cols % 2 === 0) cols--;
-            if (rows % 2 === 0) rows--;
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.age++;
 
-            mazeGrid = new Array(rows).fill(null).map(() =>
-                new Array(cols).fill(WALL) // Start with all walls
-            );
-            visitedCells = new Array(rows).fill(null).map(() => new Array(cols).fill(false));
+                // Horizontal distortion / turbulence
+                this.vx += (Math.random() - 0.5) * 0.3; // Further increase wobble
 
-            // Start at a random odd cell
-            const startX = Math.floor(Math.random() * (cols / 2)) * 2 + 1;
-            const startY = Math.floor(Math.random() * (rows / 2)) * 2 + 1;
-            
-            currentCell = { x: startX, y: startY };
-            mazeGrid[startY][startX] = PATH;
-            visitedCells[startY][startX] = true;
-            stack.push(currentCell);
-            generationComplete = false;
-        }
+                // Fade out
+                this.opacity = (this.life - this.age) / this.life;
+                if (this.opacity < 0.05) this.opacity = 0; // Ensure it fades completely
 
-        function getUnvisitedNeighbors(cell) {
-            const neighbors = [];
-            // Only check actual cells, not wall rows/cols (hence +/-2)
-            const potentialNeighbors = [
-                { x: cell.x, y: cell.y - 2 }, // Up
-                { x: cell.x, y: cell.y + 2 }, // Down
-                { x: cell.x - 2, y: cell.y }, // Left
-                { x: cell.x + 2, y: cell.y }  // Right
-            ];
-
-            for (const n of potentialNeighbors) {
-                if (n.x >= 0 && n.x < cols && n.y >= 0 && n.y < rows && !visitedCells[n.y][n.x]) {
-                    neighbors.push(n);
+                if (this.age > this.life || this.y < 0) {
+                    this.init(); // Reset particle
                 }
             }
-            return neighbors;
-        }
 
-        function removeWall(cell1, cell2) {
-            const wallX = cell1.x + (cell2.x - cell1.x) / 2;
-            const wallY = cell1.y + (cell2.y - cell1.y) / 2;
-            mazeGrid[wallY][wallX] = PATH;
-        }
 
-        function generateMazeStep() {
-            if (stack.length === 0) {
-                generationComplete = true;
-                return;
-            }
-
-            for (let k = 0; k < generationSpeed && !generationComplete; k++) {
-                currentCell = stack[stack.length - 1]; // Peek at the top of the stack
-                const neighbors = getUnvisitedNeighbors(currentCell);
-
-                if (neighbors.length > 0) {
-                    const nextCell = neighbors[Math.floor(Math.random() * neighbors.length)];
-                    removeWall(currentCell, nextCell);
-                    mazeGrid[nextCell.y][nextCell.x] = PATH;
-                    visitedCells[nextCell.y][nextCell.x] = true;
-                    stack.push(nextCell);
-                    currentCell = nextCell;
-                } else {
-                    stack.pop(); // Backtrack
-                }
+            draw() {
+                ctx.fillStyle = `rgba(${this.color[0]}, ${this.color[1]}, ${this.color[2]}, ${this.opacity})`;
+                ctx.fillText(this.char, this.x, this.y);
             }
         }
 
-        function drawMaze() {
-            ctx.fillStyle = '#000000'; // Pure black background
+        function animate() {
+            // Clear with slight transparency for a smoke/haze trail effect
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             ctx.font = `${fontSize}px 'VT323'`; // Hardcoded font
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
 
-            for (let y = 0; y < rows; y++) {
-                for (let x = 0; x < cols; x++) {
-                    const char = mazeGrid[y][x] === WALL
-                        ? WALL_CHARS_SET[Math.floor(Math.random() * WALL_CHARS_SET.length)]
-                        : PATH_CHARS_SET[Math.floor(Math.random() * PATH_CHARS_SET.length)];
-                    ctx.fillStyle = mazeGrid[y][x] === WALL ? COLOR_WALL : COLOR_PATH;
-                    ctx.fillText(char, x * fontSize, y * fontSize + fontSize); // +fontSize to offset for baseline
+            // Spawn new particles
+            if (Math.random() < spawnRate && fireParticles.length < maxFireParticles) {
+                fireParticles.push(new FireParticle());
+            }
+
+            // Update and draw existing particles
+            for (let i = fireParticles.length - 1; i >= 0; i--) {
+                const particle = fireParticles[i];
+                particle.update();
+                particle.draw();
+                if (particle.opacity <= 0) {
+                    fireParticles.splice(i, 1);
                 }
             }
-        }
 
-        let restartTimer = null; // To hold the timeout ID
-
-        function animate() {
-            if (!generationComplete) {
-                generateMazeStep();
-            } else {
-                // Maze generation is complete, schedule a restart if not already scheduled
-                if (!restartTimer) {
-                    restartTimer = setTimeout(() => {
-                        initMaze(); // Reinitialize maze
-                        restartTimer = null; // Clear timer
-                    }, 2000); // Wait 2 seconds before restarting
-                }
-            }
-            drawMaze();
             requestAnimationFrame(animate);
         }
         
-        initMaze();
+        // Initial population of particles
+        for(let i = 0; i < maxFireParticles / 2; i++) {
+            fireParticles.push(new FireParticle());
+        }
         animate();
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            initMaze(); // Reinitialize maze on resize
+            // Clear particles and reinitialize
+            fireParticles.length = 0;
+            for(let i = 0; i < maxFireParticles / 2; i++) {
+                fireParticles.push(new FireParticle());
+            }
         });
     </script>
 </body>
