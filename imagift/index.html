@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="3600"> <!-- Refresh every hour -->
-    <title>Digital Embers - Animation 86</title>
+    <meta http-equiv="refresh" content="3600">
+    <title>Data Stream</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #000000;
+            --background-color: #020305;
             --main-text-color: #b0c4de;
             --accent-color: #3d8bff;
             --secondary-text-color: #6a7380;
@@ -21,9 +21,16 @@
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             line-height: 1.7; overflow: hidden;
-            /* No background-image or animation: noise to ensure clean black background */
+            background-image:
+                radial-gradient(ellipse at center, rgba(176, 196, 222, 0.03), transparent 80%),
+                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, var(--scanline-opacity)) 1px, rgba(255, 255, 255, var(--scanline-opacity)) 2px);
+            animation: noise 1s steps(2) infinite;
         }
-        #animation-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        @keyframes noise {
+            0%, 100% { background-position: 0 0, 0 0; }
+            50% { background-position: 50% 50%, 10px 10px; }
+        }
+        #particle-flow-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
         .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
         h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
@@ -33,112 +40,78 @@
     </style>
 </head>
 <body>
-    <canvas id="animation-canvas"></canvas>
+    <canvas id="particle-flow-canvas"></canvas>
     <div class="container">
         <h1>[message_of_the_day]</h1>
-        <p>I had a long walk with Joanne today. We talked about our personal lives and work. I think my plan is to go to different departments i've helped and get letters of recommendation, along with Joanne's, and take it directly to the VP. I'm scared and am not in the best mental space for all of this to be happening. I have a week or two to do this.</p>
+        <p>Today was the final hangout with dimitri before he moves. We did some planning on our Europe trip in person. I think the decision is to do it not during winter break but around April instead.</p>
     </div>
-    <footer><p>
+    <footer></footer>
     <script>
-        const canvas = document.getElementById('animation-canvas');
+        const canvas = document.getElementById('particle-flow-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const fireChars = ['.', ',', '\'', '`', '^', '*', '~', '-', '=', '>', '<', '{', '}', '!', '/', '\\', 'o', '0', 'O'];
-        const fontSize = 30;
-        const fireParticles = [];
-        const maxFireParticles = 1200;
-        const spawnRate = 0.5; // Probability of spawning a new particle per frame
-        const fireColors = [
-            [255, 100, 0],   // Orange
-            [255, 165, 0],   // Lighter Orange
-            [255, 200, 0],   // Yellow
-            [200, 0, 0]      // Red
-        ];
+        const particles = [];
+        const numParticles = 300;
 
-        class FireParticle {
+        class Particle {
             constructor() {
-                this.init();
-            }
-
-            init() {
-                this.x = canvas.width / 2 + (Math.random() - 0.5) * canvas.width * 0.4; // Further increased horizontal spread
-                this.y = canvas.height;
-                this.vx = (Math.random() - 0.5) * 1.5; // Horizontal wobble further increased
-                this.vy = - (Math.random() * 4 + 3); // Upward motion further increased
-                this.char = fireChars[Math.floor(Math.random() * fireChars.length)];
-                this.color = fireColors[Math.floor(Math.random() * fireColors.length)];
-                this.opacity = Math.random() * 0.5 + 0.5; // Initial opacity
-                this.life = Math.random() * 60 + 30; // Lifespan in frames
-                this.age = 0;
+                this.x = -Math.random() * canvas.width; // Start off-screen to the left
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 1;
+                this.speed = Math.random() * 0.5 + 0.1; // Speed from left to right
+                this.opacity = Math.random() * 0.7 + 0.3;
+                this.colorHue = Math.random() * 360; // Random hue for subtle color shifts
             }
 
             update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.age++;
-
-                // Horizontal distortion / turbulence
-                this.vx += (Math.random() - 0.5) * 0.3; // Further increase wobble
-
-                // Fade out
-                this.opacity = (this.life - this.age) / this.life;
-                if (this.opacity < 0.05) this.opacity = 0; // Ensure it fades completely
-
-                if (this.age > this.life || this.y < 0) {
-                    this.init(); // Reset particle
+                this.x += this.speed;
+                if (this.x > canvas.width + this.size) { // Reset when off-screen to the right
+                    this.x = -this.size; // Reset to left
+                    this.y = Math.random() * canvas.height;
+                    this.size = Math.random() * 2 + 1;
+                    this.speed = Math.random() * 0.5 + 0.1;
+                    this.opacity = Math.random() * 0.7 + 0.3;
+                    this.colorHue = Math.random() * 360;
                 }
             }
 
-
             draw() {
-                ctx.fillStyle = `rgba(${this.color[0]}, ${this.color[1]}, ${this.color[2]}, ${this.opacity})`;
-                ctx.fillText(this.char, this.x, this.y);
+                ctx.beginPath();
+                // Subtle color shift
+                ctx.fillStyle = `hsla(${this.colorHue}, 70%, 50%, ${this.opacity})`;
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            particles.length = 0;
+            for (let i = 0; i < numParticles; i++) {
+                particles.push(new Particle());
             }
         }
 
         function animate() {
-            // Clear with slight transparency for a smoke/haze trail effect
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillStyle = 'rgba(2, 3, 5, 0.1)'; // Clear with a slight fade
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.font = `${fontSize}px 'VT323'`; // Hardcoded font
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
 
-            // Spawn new particles
-            if (Math.random() < spawnRate && fireParticles.length < maxFireParticles) {
-                fireParticles.push(new FireParticle());
-            }
-
-            // Update and draw existing particles
-            for (let i = fireParticles.length - 1; i >= 0; i--) {
-                const particle = fireParticles[i];
-                particle.update();
-                particle.draw();
-                if (particle.opacity <= 0) {
-                    fireParticles.splice(i, 1);
-                }
-            }
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
 
             requestAnimationFrame(animate);
         }
-        
-        // Initial population of particles
-        for(let i = 0; i < maxFireParticles / 2; i++) {
-            fireParticles.push(new FireParticle());
-        }
+
+        init();
         animate();
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            // Clear particles and reinitialize
-            fireParticles.length = 0;
-            for(let i = 0; i < maxFireParticles / 2; i++) {
-                fireParticles.push(new FireParticle());
-            }
+            init(); // Re-initialize particles for new screen size
         });
     </script>
 </body>
