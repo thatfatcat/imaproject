@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="3600">
-    <title>Data Stream</title>
+    <meta http-equiv="refresh" content="3600"> <!-- Refresh every hour -->
+    <title>Sonic Glyphs - Animation 88</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #020305;
+            --background-color: #000000;
             --main-text-color: #b0c4de;
             --accent-color: #3d8bff;
             --secondary-text-color: #6a7380;
@@ -21,16 +21,9 @@
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
             line-height: 1.7; overflow: hidden;
-            background-image:
-                radial-gradient(ellipse at center, rgba(176, 196, 222, 0.03), transparent 80%),
-                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, var(--scanline-opacity)) 1px, rgba(255, 255, 255, var(--scanline-opacity)) 2px);
-            animation: noise 1s steps(2) infinite;
+            /* No background-image or animation: noise to ensure clean black background */
         }
-        @keyframes noise {
-            0%, 100% { background-position: 0 0, 0 0; }
-            50% { background-position: 50% 50%, 10px 10px; }
-        }
-        #particle-flow-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #animation-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
         .container, footer { position: relative; z-index: 1; }
         .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
         h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
@@ -40,78 +33,64 @@
     </style>
 </head>
 <body>
-    <canvas id="particle-flow-canvas"></canvas>
+    <canvas id="animation-canvas"></canvas>
     <div class="container">
         <h1>[message_of_the_day]</h1>
-        <p>Today was the final hangout with dimitri before he moves. We did some planning on our Europe trip in person. I think the decision is to do it not during winter break but around April instead.</p>
+        <p>I feel really ill equipped at the moment to have 4 lives depend on me. At some point today I realized the rat bottle stopped dispensing water, and I'm not sure how long it was like that. I'm out of kitty food for Thorfinn too. I would be so alone without them though. I hope they are happy.</p>
     </div>
-    <footer></footer>
+    <footer><p>
     <script>
-        const canvas = document.getElementById('particle-flow-canvas');
+        const canvas = document.getElementById('animation-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const particles = [];
-        const numParticles = 300;
+        const waveChars = ['_', '-', '=', '~', '^', '|', '+', 'X', '>', '<', '/'];
+        const fontSize = 16;
+        const amplitude = 50; // Max height of the wave in pixels
+        const frequency = 0.01; // How many cycles across the screen
+        const waveSpeed = 0.05; // How fast the wave propagates
+        let time = 0;
+        const centerY = canvas.height / 2;
 
-        class Particle {
-            constructor() {
-                this.x = -Math.random() * canvas.width; // Start off-screen to the left
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 2 + 1;
-                this.speed = Math.random() * 0.5 + 0.1; // Speed from left to right
-                this.opacity = Math.random() * 0.7 + 0.3;
-                this.colorHue = Math.random() * 360; // Random hue for subtle color shifts
-            }
-
-            update() {
-                this.x += this.speed;
-                if (this.x > canvas.width + this.size) { // Reset when off-screen to the right
-                    this.x = -this.size; // Reset to left
-                    this.y = Math.random() * canvas.height;
-                    this.size = Math.random() * 2 + 1;
-                    this.speed = Math.random() * 0.5 + 0.1;
-                    this.opacity = Math.random() * 0.7 + 0.3;
-                    this.colorHue = Math.random() * 360;
-                }
-            }
-
-            draw() {
-                ctx.beginPath();
-                // Subtle color shift
-                ctx.fillStyle = `hsla(${this.colorHue}, 70%, 50%, ${this.opacity})`;
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
+        function getRandomWaveChar() {
+            return waveChars[Math.floor(Math.random() * waveChars.length)];
         }
 
-        function init() {
-            particles.length = 0;
-            for (let i = 0; i < numParticles; i++) {
-                particles.push(new Particle());
+        function drawWave() {
+            ctx.fillStyle = '#000000'; // Pure black background
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.font = `${fontSize}px 'VT323'`; // Hardcoded font
+            ctx.fillStyle = '#00FF00'; // Hardcoded bright green for clear visibility
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const numCharsX = Math.floor(canvas.width / fontSize);
+
+            for (let i = 0; i < numCharsX; i++) {
+                const x = i * fontSize;
+                // Calculate y position for the wave
+                const y = Math.sin(x * frequency + time * waveSpeed) * amplitude + centerY;
+                
+                // Draw a random character from the set
+                ctx.fillText(getRandomWaveChar(), x + fontSize / 2, y);
             }
         }
 
         function animate() {
-            ctx.fillStyle = 'rgba(2, 3, 5, 0.1)'; // Clear with a slight fade
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            particles.forEach(p => {
-                p.update();
-                p.draw();
-            });
-
+            time++; // Increment time for wave propagation
+            drawWave();
             requestAnimationFrame(animate);
         }
-
-        init();
+        
         animate();
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            init(); // Re-initialize particles for new screen size
+            // Recalculate centerY on resize
+            centerY = canvas.height / 2;
         });
     </script>
 </body>
