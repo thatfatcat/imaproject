@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600"> <!-- Refresh every hour -->
-    <title>Echoing Code - Animation 89</title>
+    <title>Algorithmic Plasma - Animation 90</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -35,8 +35,8 @@
 <body>
     <canvas id="animation-canvas"></canvas>
     <div class="container">
-        <h1>[Message_of_the_day]</h1>
-        <p>As a method of being better about doing chores im giving myself a point system. Small chores are 1 point and big chores are 2. I need to get 3 points every day.</p>
+        <h1>[message_of_the_day]</h1>
+        <p>Right now the only way I've found to get mitski to eat is to dip my finger in gerber baby food and have her lick it off my finger. She won't lick it from the bowl. If that's what I have to do then so be it. I'm just glad she's eating. The vet won't answer my call about the mites.</p>
     </div>
     <footer><p>
     <script>
@@ -45,108 +45,63 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const headChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
-        const tailChars = '.-_~;:,';
-        const fontSize = 18;
+        const plasmaChars = [' ', '.', '-', '=', '+', '*', '#', '%', '@', '█']; // Sparse to dense
+        const fontSize = 10;
         let cols = Math.floor(canvas.width / fontSize);
-        const raindrops = [];
-        const maxDrops = 100;
-        const spawnRate = 0.8; // Probability of spawning a new drop per frame
-        const tailLengthMin = 5;
-        const tailLengthMax = 15;
-        const dropSpeedMin = 5;
-        const dropSpeedMax = 10;
-        const headColor = '#00FF00'; // Bright green for head
-        const tailColor = '#00CC00'; // Slightly darker green for tail
+        let rows = Math.floor(canvas.height / fontSize);
+        let time = 0;
 
-        class Raindrop {
-            constructor(col) {
-                this.col = col;
-                this.init();
-            }
+        const plasmaColor = [0, 255, 0]; // Base green color (RGB)
 
-            init() {
-                this.x = this.col * fontSize;
-                this.y = Math.random() * -canvas.height; // Start off-screen above
-                this.speed = Math.random() * (dropSpeedMax - dropSpeedMin) + dropSpeedMin;
-                this.headChar = headChars[Math.floor(Math.random() * headChars.length)];
-                this.tailLength = Math.floor(Math.random() * (tailLengthMax - tailLengthMin + 1)) + tailLengthMin;
-                this.tail = [];
-                for (let i = 0; i < this.tailLength; i++) {
-                    this.tail.push(tailChars[Math.floor(Math.random() * tailChars.length)]);
-                }
-            }
+        function drawPlasma() {
+            ctx.fillStyle = '#000000'; // Pure black background
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.font = `${fontSize}px 'VT323'`; // Hardcoded font
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
 
-            update() {
-                this.y += this.speed;
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const x = col * fontSize;
+                    const y = row * fontSize;
 
-                if (this.y > canvas.height + this.tailLength * fontSize) { // If tail is completely off-screen
-                    this.init(); // Reset to top
-                }
-            }
+                    // Plasma calculation (multiple sine waves)
+                    let val = 0;
+                    val += Math.sin(x * 0.03 + time * 0.05);
+                    val += Math.sin(y * 0.02 + time * 0.03);
+                    val += Math.sin((x + y) * 0.015 + time * 0.04);
+                    val += Math.sin(Math.sqrt(x * x + y * y) * 0.01 + time * 0.02);
 
-            draw() {
-                // Draw tail
-                for (let i = 0; i < this.tail.length; i++) {
-                    const tailY = this.y - (i + 1) * fontSize;
-                    if (tailY > -fontSize && tailY < canvas.height + fontSize) { // Only draw visible parts of tail
-                        const opacity = 1 - (i / this.tail.length);
-                        ctx.fillStyle = `rgba(${parseInt(tailColor.slice(1,3), 16)}, ${parseInt(tailColor.slice(3,5), 16)}, ${parseInt(tailColor.slice(5,7), 16)}, ${opacity})`;
-                        ctx.fillText(this.tail[i], this.x, tailY);
-                    }
-                }
+                    // Normalize val from -4 to 4 (approx) to 0-1
+                    val = (val + 4) / 8;
 
-                // Draw head
-                if (this.y > -fontSize && this.y < canvas.height + fontSize) { // Only draw visible head
-                    ctx.fillStyle = headColor;
-                    ctx.fillText(this.headChar, this.x, this.y);
-                }
-            }
-        }
+                    // Map val to a character density
+                    const charIndex = Math.floor(val * (plasmaChars.length - 1));
+                    const char = plasmaChars[charIndex];
 
-        function initDrops() {
-            for (let i = 0; i < cols; i++) {
-                if (Math.random() < 0.5) { // Initially populate half the columns
-                    raindrops.push(new Raindrop(i));
+                    // Map val to opacity for a smooth effect
+                    const opacity = Math.max(0, Math.min(1, val * 1.5 - 0.2)); // Adjust for desired brightness
+
+                    ctx.fillStyle = `rgba(${plasmaColor[0]}, ${plasmaColor[1]}, ${plasmaColor[2]}, ${opacity})`;
+                    ctx.fillText(char, x + fontSize / 2, y + fontSize / 2);
                 }
             }
         }
 
         function animate() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // Clear with slight transparency for a subtle trail effect
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.font = `${fontSize}px 'VT323'`; // Hardcoded font
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-
-            // Spawn new drops in empty columns
-            if (Math.random() < spawnRate) {
-                 const colToSpawn = Math.floor(Math.random() * cols);
-                 const hasDrop = raindrops.some(drop => drop.col === colToSpawn);
-                 if (!hasDrop) {
-                     raindrops.push(new Raindrop(colToSpawn));
-                 }
-            }
-
-            for (let i = raindrops.length - 1; i >= 0; i--) {
-                const drop = raindrops[i];
-                drop.update();
-                drop.draw();
-            }
-
+            time++; // Increment time for animation
+            drawPlasma();
             requestAnimationFrame(animate);
         }
         
-        initDrops();
         animate();
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             cols = Math.floor(canvas.width / fontSize);
-            raindrops.length = 0; // Clear and re-initialize
-            initDrops();
+            rows = Math.floor(canvas.height / fontSize);
         });
     </script>
 </body>
