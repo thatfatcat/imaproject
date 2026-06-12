@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600"> <!-- Refresh every hour -->
-    <title>Algorithmic Plasma - Animation 90</title>
+    <title>Flickering Display - Animation 91</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -36,7 +36,7 @@
     <canvas id="animation-canvas"></canvas>
     <div class="container">
         <h1>[message_of_the_day]</h1>
-        <p>Right now the only way I've found to get mitski to eat is to dip my finger in gerber baby food and have her lick it off my finger. She won't lick it from the bowl. If that's what I have to do then so be it. I'm just glad she's eating. The vet won't answer my call about the mites.</p>
+        <p>Work has been really stressful. Suddenly out of nowhere I have a deadline tomorrow of making sure all the labs work. I was not ready for that at all. I get texts throughout the day at random times asking me to do the most random things. Before it felt like they didn't understand how little work I had and now it feels like they don't understand how much work I have. I miss Guy. I feel alone in this without him.</p>
     </div>
     <footer><p>
     <script>
@@ -45,63 +45,82 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const plasmaChars = [' ', '.', '-', '=', '+', '*', '#', '%', '@', '█']; // Sparse to dense
-        const fontSize = 10;
+        const fadeChars = ['.', '_', '`', ':', ' ']; // Subtle characters, including space
+        const fontSize = 12;
         let cols = Math.floor(canvas.width / fontSize);
         let rows = Math.floor(canvas.height / fontSize);
-        let time = 0;
+        const grid = [];
+        const fadeSpeed = 0.005; // How fast characters fade in/out
 
-        const plasmaColor = [0, 255, 0]; // Base green color (RGB)
+        class GridCell {
+            constructor(char, opacity, fadeDirection) {
+                this.char = char;
+                this.opacity = opacity;
+                this.fadeDirection = fadeDirection; // 1 for fading in, -1 for fading out
+            }
 
-        function drawPlasma() {
+            update() {
+                this.opacity += this.fadeDirection * fadeSpeed;
+
+                if (this.opacity >= 1) {
+                    this.opacity = 1;
+                    this.fadeDirection = -1; // Start fading out
+                    this.char = fadeChars[Math.floor(Math.random() * fadeChars.length)]; // Change char on fade in
+                } else if (this.opacity <= 0) {
+                    this.opacity = 0;
+                    this.fadeDirection = 1; // Start fading in
+                    this.char = fadeChars[Math.floor(Math.random() * fadeChars.length)]; // Change char on fade out
+                }
+            }
+        }
+
+        function initGrid() {
+            cols = Math.floor(canvas.width / fontSize);
+            rows = Math.floor(canvas.height / fontSize);
+            grid.length = 0; // Clear existing grid
+
+            for (let row = 0; row < rows; row++) {
+                grid[row] = [];
+                for (let col = 0; col < cols; col++) {
+                    const randomChar = fadeChars[Math.floor(Math.random() * fadeChars.length)];
+                    const randomOpacity = Math.random();
+                    const randomDirection = Math.random() > 0.5 ? 1 : -1;
+                    grid[row][col] = new GridCell(randomChar, randomOpacity, randomDirection);
+                }
+            }
+        }
+
+        function drawFadingGrid() {
             ctx.fillStyle = '#000000'; // Pure black background
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             ctx.font = `${fontSize}px 'VT323'`; // Hardcoded font
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
 
             for (let row = 0; row < rows; row++) {
                 for (let col = 0; col < cols; col++) {
-                    const x = col * fontSize;
-                    const y = row * fontSize;
+                    const cell = grid[row][col];
+                    cell.update();
 
-                    // Plasma calculation (multiple sine waves)
-                    let val = 0;
-                    val += Math.sin(x * 0.03 + time * 0.05);
-                    val += Math.sin(y * 0.02 + time * 0.03);
-                    val += Math.sin((x + y) * 0.015 + time * 0.04);
-                    val += Math.sin(Math.sqrt(x * x + y * y) * 0.01 + time * 0.02);
-
-                    // Normalize val from -4 to 4 (approx) to 0-1
-                    val = (val + 4) / 8;
-
-                    // Map val to a character density
-                    const charIndex = Math.floor(val * (plasmaChars.length - 1));
-                    const char = plasmaChars[charIndex];
-
-                    // Map val to opacity for a smooth effect
-                    const opacity = Math.max(0, Math.min(1, val * 1.5 - 0.2)); // Adjust for desired brightness
-
-                    ctx.fillStyle = `rgba(${plasmaColor[0]}, ${plasmaColor[1]}, ${plasmaColor[2]}, ${opacity})`;
-                    ctx.fillText(char, x + fontSize / 2, y + fontSize / 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${cell.opacity})`; // White text fading
+                    ctx.fillText(cell.char, col * fontSize, row * fontSize + fontSize); // +fontSize for baseline
                 }
             }
         }
 
         function animate() {
-            time++; // Increment time for animation
-            drawPlasma();
+            drawFadingGrid();
             requestAnimationFrame(animate);
         }
         
+        initGrid();
         animate();
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            cols = Math.floor(canvas.width / fontSize);
-            rows = Math.floor(canvas.height / fontSize);
+            initGrid(); // Reinitialize grid on resize
         });
     </script>
 </body>
