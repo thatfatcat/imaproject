@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600"> <!-- Refresh every hour -->
-    <title>Flickering Display - Animation 91</title>
+    <title>Cosmic Drift - Animation 93</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
@@ -35,8 +35,8 @@
 <body>
     <canvas id="animation-canvas"></canvas>
     <div class="container">
-        <h1>[message_of_the_day]</h1>
-        <p>Work has been really stressful. Suddenly out of nowhere I have a deadline tomorrow of making sure all the labs work. I was not ready for that at all. I get texts throughout the day at random times asking me to do the most random things. Before it felt like they didn't understand how little work I had and now it feels like they don't understand how much work I have. I miss Guy. I feel alone in this without him.</p>
+        <h1>[Message_of_the_day]</h1>
+        <p>Using this weekend to spend some time with my pets. Thorfinn and the rats always want to spend time with me but don't speak English well enough to make an appointment with me like my friends do. They deserve it, and I'm in serious need of alone time. I might also decorate my room too.</p>
     </div>
     <footer><p>
     <script>
@@ -45,82 +45,86 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const fadeChars = ['.', '_', '`', ':', ' ']; // Subtle characters, including space
-        const fontSize = 12;
-        let cols = Math.floor(canvas.width / fontSize);
-        let rows = Math.floor(canvas.height / fontSize);
-        const grid = [];
-        const fadeSpeed = 0.005; // How fast characters fade in/out
+        const starChars = ['.', '*', '+', 'o', '0'];
+        const numStars = 1000;
+        const stars = [];
+        const baseSpeed = 1;
+        const perspectiveFactor = 200; // How much 'z' affects screen position
 
-        class GridCell {
-            constructor(char, opacity, fadeDirection) {
-                this.char = char;
-                this.opacity = opacity;
-                this.fadeDirection = fadeDirection; // 1 for fading in, -1 for fading out
+        let shiftAngle = 0;
+        const shiftSpeed = 0.005; // Speed of perspective shift oscillation
+        const maxShiftAmount = 0.1; // Max fractional shift of canvas width/height
+
+        class Star {
+            constructor() {
+                this.init();
             }
 
-            update() {
-                this.opacity += this.fadeDirection * fadeSpeed;
+            init() {
+                this.x = Math.random() * 2 - 1; // -1 to 1 normalized
+                this.y = Math.random() * 2 - 1; // -1 to 1 normalized
+                this.z = Math.random(); // 0 to 1 normalized depth
 
-                if (this.opacity >= 1) {
-                    this.opacity = 1;
-                    this.fadeDirection = -1; // Start fading out
-                    this.char = fadeChars[Math.floor(Math.random() * fadeChars.length)]; // Change char on fade in
-                } else if (this.opacity <= 0) {
-                    this.opacity = 0;
-                    this.fadeDirection = 1; // Start fading in
-                    this.char = fadeChars[Math.floor(Math.random() * fadeChars.length)]; // Change char on fade out
+                this.char = starChars[Math.floor(Math.random() * starChars.length)];
+            }
+
+            update(currentShiftX, currentShiftY) {
+                this.z -= baseSpeed * 0.01; // Move forward
+
+                // Apply perspective shift
+                this.x += currentShiftX * (1 - this.z);
+                this.y += currentShiftY * (1 - this.z);
+
+                if (this.z < 0 || Math.abs(this.x) > 1.5 || Math.abs(this.y) > 1.5) { // If passed or out of view
+                    this.init(); // Reset
                 }
             }
-        }
 
-        function initGrid() {
-            cols = Math.floor(canvas.width / fontSize);
-            rows = Math.floor(canvas.height / fontSize);
-            grid.length = 0; // Clear existing grid
+            draw() {
+                const screenX = (this.x * perspectiveFactor / this.z) + canvas.width / 2;
+                const screenY = (this.y * perspectiveFactor / this.z) + canvas.height / 2;
 
-            for (let row = 0; row < rows; row++) {
-                grid[row] = [];
-                for (let col = 0; col < cols; col++) {
-                    const randomChar = fadeChars[Math.floor(Math.random() * fadeChars.length)];
-                    const randomOpacity = Math.random();
-                    const randomDirection = Math.random() > 0.5 ? 1 : -1;
-                    grid[row][col] = new GridCell(randomChar, randomOpacity, randomDirection);
-                }
-            }
-        }
+                const size = (1 - this.z) * 20 + 5; // Scale font size based on depth
+                const opacity = Math.max(0.1, 1 - this.z); // Fade based on depth
 
-        function drawFadingGrid() {
-            ctx.fillStyle = '#000000'; // Pure black background
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.font = `${fontSize}px 'VT323'`; // Hardcoded font
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-
-            for (let row = 0; row < rows; row++) {
-                for (let col = 0; col < cols; col++) {
-                    const cell = grid[row][col];
-                    cell.update();
-
-                    ctx.fillStyle = `rgba(255, 255, 255, ${cell.opacity})`; // White text fading
-                    ctx.fillText(cell.char, col * fontSize, row * fontSize + fontSize); // +fontSize for baseline
-                }
+                ctx.font = `${size}px 'VT323'`;
+                ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`; // White stars, fading
+                ctx.fillText(this.char, screenX, screenY);
             }
         }
 
         function animate() {
-            drawFadingGrid();
+            ctx.fillStyle = '#000000'; // Pure black background
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Oscillate shift angles
+            shiftAngle += shiftSpeed;
+            const currentShiftX = Math.sin(shiftAngle * 1.5) * maxShiftAmount;
+            const currentShiftY = Math.sin(shiftAngle) * maxShiftAmount;
+
+            // Spawn initial stars
+            if (stars.length < numStars) {
+                stars.push(new Star());
+            }
+
+            stars.forEach(star => {
+                star.update(currentShiftX, currentShiftY);
+                star.draw();
+            });
+
             requestAnimationFrame(animate);
         }
         
-        initGrid();
+        // Initial population of stars
+        for(let i = 0; i < numStars; i++) {
+            stars.push(new Star());
+        }
         animate();
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            initGrid(); // Reinitialize grid on resize
+            // Stars will auto-reset when they go out of bounds on resize
         });
     </script>
 </body>
