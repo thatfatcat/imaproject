@@ -3,129 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="3600"> <!-- Refresh every hour -->
-    <title>Cosmic Drift - Animation 93</title>
+    <meta http-equiv="refresh" content="3600">
+    <title>Animation 26</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
             --background-color: #000000;
-            --main-text-color: #b0c4de;
-            --accent-color: #3d8bff;
-            --secondary-text-color: #6a7380;
-            --scanline-opacity: 0.05;
-            --noise-opacity: 0.03;
+            --main-text-color: #f0f0f0;
+            --accent-color: #00ff00; /* Classic green terminal */
+            --secondary-text-color: #aaccaa;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
         body, html {
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
-            line-height: 1.7; overflow: hidden;
-            /* No background-image or animation: noise to ensure clean black background */
+            overflow: hidden;
         }
-        #animation-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
-        .container, footer { position: relative; z-index: 1; }
-        .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; }
-        h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
-        p { margin-bottom: 1.5rem; width: 100%; }
-        footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
-        @media (max-width: 768px) { h1 { font-size: 2rem; } }
+        #signal-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        .container, footer {
+            position: relative;
+            z-index: 1;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4vw;
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        h1 {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: normal;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 0 10px var(--accent-color);
+        }
+        p {
+            margin-bottom: 1.5rem;
+            width: 100%;
+            max-width: 600px;
+        }
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            font-size: 0.9rem;
+            color: var(--secondary-text-color);
+            margin-top: auto;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
-    <canvas id="animation-canvas"></canvas>
+    <canvas id="signal-canvas"></canvas>
     <div class="container">
         <h1>[Message_of_the_day]</h1>
-        <p>Using this weekend to spend some time with my pets. Thorfinn and the rats always want to spend time with me but don't speak English well enough to make an appointment with me like my friends do. They deserve it, and I'm in serious need of alone time. I might also decorate my room too.</p>
+        <p>I'm trying to reorganize my room to fit in my computer desk. It is a huge mess. My plan was to move the rats into the closet as well and my clothes into abas old closet. Hopefully I can get it all done in a decent time tomorrow.</p>
     </div>
     <footer><p>
+
     <script>
-        const canvas = document.getElementById('animation-canvas');
+        const canvas = document.getElementById('signal-canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
 
-        const starChars = ['.', '*', '+', 'o', '0'];
-        const numStars = 1000;
-        const stars = [];
-        const baseSpeed = 1;
-        const perspectiveFactor = 200; // How much 'z' affects screen position
+        const resolution = 10;
+        let signal, cols, rows;
+        let glitches = [];
+        const glitchChars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()[]{};:,.<>?';
 
-        let shiftAngle = 0;
-        const shiftSpeed = 0.005; // Speed of perspective shift oscillation
-        const maxShiftAmount = 0.1; // Max fractional shift of canvas width/height
+        function setup() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            cols = Math.floor(canvas.width / resolution);
+            rows = Math.floor(canvas.height / resolution);
+            signal = { x: 0, y: 0 };
+        }
 
-        class Star {
-            constructor() {
-                this.init();
-            }
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            init() {
-                this.x = Math.random() * 2 - 1; // -1 to 1 normalized
-                this.y = Math.random() * 2 - 1; // -1 to 1 normalized
-                this.z = Math.random(); // 0 to 1 normalized depth
+            // Draw and update the main signal
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
+            ctx.font = `${resolution}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
+            ctx.fillText('#', signal.x * resolution, signal.y * resolution);
 
-                this.char = starChars[Math.floor(Math.random() * starChars.length)];
-            }
-
-            update(currentShiftX, currentShiftY) {
-                this.z -= baseSpeed * 0.01; // Move forward
-
-                // Apply perspective shift
-                this.x += currentShiftX * (1 - this.z);
-                this.y += currentShiftY * (1 - this.z);
-
-                if (this.z < 0 || Math.abs(this.x) > 1.5 || Math.abs(this.y) > 1.5) { // If passed or out of view
-                    this.init(); // Reset
+            signal.x++;
+            if (signal.x >= cols) {
+                signal.x = 0;
+                signal.y++;
+                if (signal.y >= rows) {
+                    signal.y = 0;
                 }
             }
 
-            draw() {
-                const screenX = (this.x * perspectiveFactor / this.z) + canvas.width / 2;
-                const screenY = (this.y * perspectiveFactor / this.z) + canvas.height / 2;
+            // Create new glitches randomly
+            if (Math.random() < 0.3) {
+                glitches.push({
+                    x: Math.floor(Math.random() * cols),
+                    y: Math.floor(Math.random() * rows),
+                    char: glitchChars.charAt(Math.floor(Math.random() * glitchChars.length)),
+                    life: 20 // life in frames
+                });
+            }
 
-                const size = (1 - this.z) * 20 + 5; // Scale font size based on depth
-                const opacity = Math.max(0.1, 1 - this.z); // Fade based on depth
-
-                ctx.font = `${size}px 'VT323'`;
-                ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`; // White stars, fading
-                ctx.fillText(this.char, screenX, screenY);
+            // Draw and update glitches
+            for (let i = glitches.length - 1; i >= 0; i--) {
+                const glitch = glitches[i];
+                ctx.fillStyle = `rgba(0, 255, 0, ${glitch.life / 20})`;
+                ctx.fillText(glitch.char, glitch.x * resolution, glitch.y * resolution);
+                glitch.life--;
+                if (glitch.life <= 0) {
+                    glitches.splice(i, 1);
+                }
             }
         }
 
         function animate() {
-            ctx.fillStyle = '#000000'; // Pure black background
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Oscillate shift angles
-            shiftAngle += shiftSpeed;
-            const currentShiftX = Math.sin(shiftAngle * 1.5) * maxShiftAmount;
-            const currentShiftY = Math.sin(shiftAngle) * maxShiftAmount;
-
-            // Spawn initial stars
-            if (stars.length < numStars) {
-                stars.push(new Star());
-            }
-
-            stars.forEach(star => {
-                star.update(currentShiftX, currentShiftY);
-                star.draw();
-            });
-
-            requestAnimationFrame(animate);
+            // Using setInterval instead of requestAnimationFrame for a more consistent,
+            // non-blocking timing, which fits the "unstoppable" theme.
+            setInterval(draw, 50);
         }
-        
-        // Initial population of stars
-        for(let i = 0; i < numStars; i++) {
-            stars.push(new Star());
-        }
+
+        window.addEventListener('resize', setup);
+        setup();
         animate();
-
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            // Stars will auto-reset when they go out of bounds on resize
-        });
     </script>
 </body>
 </html>
