@@ -3,145 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="3600">
-    <title>Animation 26</title>
+    <meta http-equiv="refresh" content="3600"> <!-- Refresh every hour -->
+    <title>Text Scanner - Animation 98</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
-            --background-color: #000000;
-            --main-text-color: #f0f0f0;
-            --accent-color: #00ff00; /* Classic green terminal */
-            --secondary-text-color: #aaccaa;
+            --background-color: #000000; /* Pure black for terminal feel */
+            --main-text-color: #b0c4de;
+            --accent-color: #00FF00; /* Bright green for base terminal text */
+            --highlight-color: #FFFF00; /* Yellow for scanner highlight */
+            --secondary-text-color: #6a7380;
+            --scanline-opacity: 0.05;
+            --noise-opacity: 0.03;
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
         body, html {
             height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
             color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
-            overflow: hidden;
+            line-height: 1.7; overflow: hidden;
         }
-        #signal-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-        }
-        .container, footer {
-            position: relative;
-            z-index: 1;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 4vw;
-            min-height: 90vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-        h1 {
-            font-family: var(--font-display);
-            font-size: 3rem;
-            color: var(--accent-color);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: normal;
-            margin-bottom: 1.5rem;
-            text-shadow: 0 0 10px var(--accent-color);
-        }
-        p {
-            margin-bottom: 1.5rem;
-            width: 100%;
-            max-width: 600px;
-        }
-        footer {
-            text-align: center;
-            padding: 2rem 0;
-            font-size: 0.9rem;
-            color: var(--secondary-text-color);
-            margin-top: auto;
-            width: 100%;
-        }
+        #animation-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .container, footer { position: relative; z-index: 1; }
+        .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; background-color: rgba(0, 0, 0, 0.7); }
+        h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
+        p { margin-bottom: 1.5rem; width: 100%; }
+        footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
+        @media (max-width: 768px) { h1 { font-size: 2rem; } }
     </style>
 </head>
 <body>
-    <canvas id="signal-canvas"></canvas>
+    <canvas id="animation-canvas"></canvas>
     <div class="container">
-        <h1>[Message_of_the_day]</h1>
-        <p>I'm trying to reorganize my room to fit in my computer desk. It is a huge mess. My plan was to move the rats into the closet as well and my clothes into abas old closet. Hopefully I can get it all done in a decent time tomorrow.</p>
+        <h1>[message_of_the_day]</h1>
+        <p>Recently I've been feeling very forgetful and not as sharp as I usually am. To the point that both Dimitri and Sarah both pointed it out to me. This really worried me so I looked it up online (yeah I know big mistake usually) but found something interesting. All these symptoms, together with a few others I've been experiencing are symptoms of a b12 defeciency. So I look into B12 defeciency and how to take supplements for it. When I google it one of the first things I see is that its safe to take these supplements, and often necessary when taking PPI medicine. This was on incognito mode so it wasn't targeted towards me in anyway, and pantoprazole is a PPI. In short, I need to stop taking pantoprazole and start taking supplements before the damage becomes irreversible. It makes me sad because pantoprazole was a complete miracle drug for me, but I always knew I'm not supposed to take it long term.</p>
     </div>
     <footer><p>
-
     <script>
-        const canvas = document.getElementById('signal-canvas');
+        const canvas = document.getElementById('animation-canvas');
         const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        const resolution = 10;
-        let signal, cols, rows;
-        let glitches = [];
-        const glitchChars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()[]{};:,.<>?';
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:",./<>?`~';
+        const fontSize = 16;
+        const columns = Math.floor(canvas.width / fontSize);
+        const rows = Math.floor(canvas.height / fontSize);
 
-        function setup() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            cols = Math.floor(canvas.width / resolution);
-            rows = Math.floor(canvas.height / resolution);
-            signal = { x: 0, y: 0 };
+        let grid = [];
+        for (let i = 0; i < columns; i++) {
+            grid[i] = [];
+            for (let j = 0; j < rows; j++) {
+                grid[i][j] = characters[Math.floor(Math.random() * characters.length)];
+            }
         }
 
+        let scannerX = 0; // Current column of the scanner
+        const scannerSpeed = 1; // How many columns the scanner moves per frame
+        const highlightDuration = 10; // How many frames a character stays highlighted
+
+        let highlightedChars = []; // Stores {col, row, framesLeft}
+
         function draw() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--background-color');
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw and update the main signal
-            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
-            ctx.font = `${resolution}px ${getComputedStyle(document.body).getPropertyValue('--font-primary')}`;
-            ctx.fillText('#', signal.x * resolution, signal.y * resolution);
+            const baseColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
+            const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--highlight-color');
 
-            signal.x++;
-            if (signal.x >= cols) {
-                signal.x = 0;
-                signal.y++;
-                if (signal.y >= rows) {
-                    signal.y = 0;
+            ctx.font = `${fontSize}px var(--font-display)`;
+
+            // Draw grid characters
+            for (let i = 0; i < columns; i++) {
+                for (let j = 0; j < rows; j++) {
+                    ctx.fillStyle = baseColor;
+                    ctx.fillText(grid[i][j], i * fontSize, (j + 1) * fontSize);
                 }
             }
 
-            // Create new glitches randomly
-            if (Math.random() < 0.3) {
-                glitches.push({
-                    x: Math.floor(Math.random() * cols),
-                    y: Math.floor(Math.random() * rows),
-                    char: glitchChars.charAt(Math.floor(Math.random() * glitchChars.length)),
-                    life: 20 // life in frames
-                });
+            // Draw highlighted characters
+            for (let i = highlightedChars.length - 1; i >= 0; i--) {
+                const hChar = highlightedChars[i];
+                ctx.fillStyle = highlightColor;
+                ctx.fillText(grid[hChar.col][hChar.row], hChar.col * fontSize, (hChar.row + 1) * fontSize);
+                hChar.framesLeft--;
+                if (hChar.framesLeft <= 0) {
+                    highlightedChars.splice(i, 1);
+                }
             }
 
-            // Draw and update glitches
-            for (let i = glitches.length - 1; i >= 0; i--) {
-                const glitch = glitches[i];
-                ctx.fillStyle = `rgba(0, 255, 0, ${glitch.life / 20})`;
-                ctx.fillText(glitch.char, glitch.x * resolution, glitch.y * resolution);
-                glitch.life--;
-                if (glitch.life <= 0) {
-                    glitches.splice(i, 1);
-                }
+            // Move scanner and add new highlighted characters
+            scannerX = (scannerX + scannerSpeed) % columns;
+            for (let j = 0; j < rows; j++) {
+                highlightedChars.push({ col: scannerX, row: j, framesLeft: highlightDuration });
             }
         }
 
         function animate() {
-            // Using setInterval instead of requestAnimationFrame for a more consistent,
-            // non-blocking timing, which fits the "unstoppable" theme.
-            setInterval(draw, 50);
+            draw();
+            requestAnimationFrame(animate);
         }
-
-        window.addEventListener('resize', setup);
-        setup();
+        
         animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            // Re-initialize grid and drops for new dimensions
+            const newColumns = Math.floor(canvas.width / fontSize);
+            const newRows = Math.floor(canvas.height / fontSize);
+
+            grid = [];
+            for (let i = 0; i < newColumns; i++) {
+                grid[i] = [];
+                for (let j = 0; j < newRows; j++) {
+                    grid[i][j] = characters[Math.floor(Math.random() * characters.length)];
+                }
+            }
+            // Clear highlighted characters on resize
+            highlightedChars = [];
+            scannerX = 0; // Reset scanner position
+        });
     </script>
 </body>
 </html>
