@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="3600"> <!-- Refresh every hour -->
-    <title>Text Scanner - Animation 98</title>
+    <title>ASCII Clock - Animation 99</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
         :root {
             --background-color: #000000; /* Pure black for terminal feel */
             --main-text-color: #b0c4de;
             --accent-color: #00FF00; /* Bright green for base terminal text */
-            --highlight-color: #FFFF00; /* Yellow for scanner highlight */
+            --highlight-color: #FFFF00; /* Yellow for clock display */
             --secondary-text-color: #6a7380;
             --scanline-opacity: 0.05;
             --noise-opacity: 0.03;
@@ -36,7 +36,7 @@
     <canvas id="animation-canvas"></canvas>
     <div class="container">
         <h1>[message_of_the_day]</h1>
-        <p>Recently I've been feeling very forgetful and not as sharp as I usually am. To the point that both Dimitri and Sarah both pointed it out to me. This really worried me so I looked it up online (yeah I know big mistake usually) but found something interesting. All these symptoms, together with a few others I've been experiencing are symptoms of a b12 defeciency. So I look into B12 defeciency and how to take supplements for it. When I google it one of the first things I see is that its safe to take these supplements, and often necessary when taking PPI medicine. This was on incognito mode so it wasn't targeted towards me in anyway, and pantoprazole is a PPI. In short, I need to stop taking pantoprazole and start taking supplements before the damage becomes irreversible. It makes me sad because pantoprazole was a complete miracle drug for me, but I always knew I'm not supposed to take it long term.</p>
+        <p>I have a migraine, and am really feeling the lack of my medicine. Work is brutal at the moment too, and I, for some reason, volunteered today to do more stuff. I hope you enjoy this clock and that only works if I remembered to set the display at your house to the proper time. I love you both.</p>
     </div>
     <footer><p>
     <script>
@@ -45,84 +45,160 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:",./<>?`~';
-        const fontSize = 16;
-        const columns = Math.floor(canvas.width / fontSize);
-        const rows = Math.floor(canvas.height / fontSize);
+        const charWidth = 30; // Width of each ASCII character block
+        const charHeight = 50; // Height of each ASCII character block
+        const charSpacing = 10; // Spacing between character blocks
 
-        let grid = [];
-        for (let i = 0; i < columns; i++) {
-            grid[i] = [];
-            for (let j = 0; j < rows; j++) {
-                grid[i][j] = characters[Math.floor(Math.random() * characters.length)];
+        // ASCII art for digits 0-9 and colon (each string is a row, 5x5 grid)
+        const asciiDigits = {
+            '0': [
+                " *** ",
+                "*   *",
+                "*   *",
+                "*   *",
+                " *** "
+            ],
+            '1': [
+                "  *  ",
+                " **  ",
+                "  *  ",
+                "  *  ",
+                " *** "
+            ],
+            '2': [
+                " *** ",
+                "*   *",
+                "  ** ",
+                " *   ",
+                "*****"
+            ],
+            '3': [
+                " *** ",
+                "*   *",
+                "  ** ",
+                "*   *",
+                " *** "
+            ],
+            '4': [
+                "*   *",
+                "*   *",
+                "*****",
+                "    *",
+                "    *"
+            ],
+            '5': [
+                "*****",
+                "*    ",
+                "**** ",
+                "    *",
+                "**** "
+            ],
+            '6': [
+                " *** ",
+                "*    ",
+                "**** ",
+                "*   *",
+                " *** "
+            ],
+            '7': [
+                "*****",
+                "    *",
+                "   * ",
+                "  *  ",
+                " *   "
+            ],
+            '8': [
+                " *** ",
+                "*   *",
+                " *** ",
+                "*   *",
+                " *** "
+            ],
+            '9': [
+                " *** ",
+                "*   *",
+                " **** ",
+                "    *",
+                " *** "
+            ],
+            ':': [
+                "     ",
+                "  *  ",
+                "     ",
+                "  *  ",
+                "     "
+            ]
+        };
+
+        const drawAsciiChar = (char, startX, startY, color) => {
+            const pattern = asciiDigits[char];
+            if (!pattern) return;
+
+            ctx.fillStyle = color;
+            for (let r = 0; r < pattern.length; r++) {
+                for (let c = 0; c < pattern[r].length; c++) {
+                    if (pattern[r][c] === '*') {
+                        ctx.fillRect(startX + c * (charWidth / 5), startY + r * (charHeight / 5), (charWidth / 5), (charHeight / 5));
+                    }
+                }
             }
-        }
+        };
 
-        let scannerX = 0; // Current column of the scanner
-        const scannerSpeed = 1; // How many columns the scanner moves per frame
-        const highlightDuration = 10; // How many frames a character stays highlighted
-
-        let highlightedChars = []; // Stores {col, row, framesLeft}
-
-        function draw() {
+        function drawClock() {
             ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--background-color');
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            const baseColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
-            const highlightColor = getComputedStyle(document.documentElement).getPropertyValue('--highlight-color');
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            let seconds = now.getSeconds();
 
-            ctx.font = `${fontSize}px var(--font-display)`;
+            // Format HH:MM:SS
+            hours = hours < 10 ? '0' + hours : '' + hours;
+            minutes = minutes < 10 ? '0' + minutes : '' + minutes;
+            seconds = seconds < 10 ? '0' + seconds : '' + seconds;
 
-            // Draw grid characters
-            for (let i = 0; i < columns; i++) {
-                for (let j = 0; j < rows; j++) {
-                    ctx.fillStyle = baseColor;
-                    ctx.fillText(grid[i][j], i * fontSize, (j + 1) * fontSize);
+            const timeString = `${hours}:${minutes}:${seconds}`;
+
+            // Calculate total width of the clock display
+            let totalClockWidth = 0;
+            for (let i = 0; i < timeString.length; i++) {
+                if (timeString[i] === ':') {
+                    totalClockWidth += (charWidth / 5) * 5 + charSpacing; // Colon is also 5px wide
+                } else {
+                    totalClockWidth += charWidth + charSpacing;
                 }
             }
+            totalClockWidth -= charSpacing; // Remove last spacing
 
-            // Draw highlighted characters
-            for (let i = highlightedChars.length - 1; i >= 0; i--) {
-                const hChar = highlightedChars[i];
-                ctx.fillStyle = highlightColor;
-                ctx.fillText(grid[hChar.col][hChar.row], hChar.col * fontSize, (hChar.row + 1) * fontSize);
-                hChar.framesLeft--;
-                if (hChar.framesLeft <= 0) {
-                    highlightedChars.splice(i, 1);
+            const startX = (canvas.width - totalClockWidth) / 2;
+            const startY = (canvas.height - charHeight) / 2;
+
+            let currentX = startX;
+            const clockColor = getComputedStyle(document.documentElement).getPropertyValue('--highlight-color');
+
+            for (let i = 0; i < timeString.length; i++) {
+                const char = timeString[i];
+                drawAsciiChar(char, currentX, startY, clockColor);
+                if (char === ':') {
+                    currentX += (charWidth / 5) * 5 + charSpacing;
+                } else {
+                    currentX += charWidth + charSpacing;
                 }
-            }
-
-            // Move scanner and add new highlighted characters
-            scannerX = (scannerX + scannerSpeed) % columns;
-            for (let j = 0; j < rows; j++) {
-                highlightedChars.push({ col: scannerX, row: j, framesLeft: highlightDuration });
             }
         }
 
         function animate() {
-            draw();
+            drawClock();
             requestAnimationFrame(animate);
         }
         
-        animate();
+        animate(); // Start the animation loop
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            // Re-initialize grid and drops for new dimensions
-            const newColumns = Math.floor(canvas.width / fontSize);
-            const newRows = Math.floor(canvas.height / fontSize);
-
-            grid = [];
-            for (let i = 0; i < newColumns; i++) {
-                grid[i] = [];
-                for (let j = 0; j < newRows; j++) {
-                    grid[i][j] = characters[Math.floor(Math.random() * characters.length)];
-                }
-            }
-            // Clear highlighted characters on resize
-            highlightedChars = [];
-            scannerX = 0; // Reset scanner position
+            // No need to re-initialize character data, just redraw
         });
     </script>
 </body>
