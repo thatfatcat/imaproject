@@ -3,16 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="3600">
-    <title>Hourly Refresh Clock</title>
+    <title>Thought Patterns</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
 
         :root {
-            --background-color: #000000; /* Pure black for terminal feel */
-            --main-text-color: #b0c4de;
-            --accent-color: #3d8bff; /* Blue to match particles */
-            --highlight-color: #FFFF00; /* Yellow for clock display */
+            --background-color: #020305;
+            --main-text-color: #b0c4de; /* A pale, light steel blue */
+            --accent-color: #3d8bff; /* A slightly saturated blue */
             --secondary-text-color: #6a7380;
             --scanline-opacity: 0.05;
             --noise-opacity: 0.03;
@@ -29,224 +27,173 @@
             font-family: var(--font-primary);
             font-size: 16px;
             line-height: 1.7;
-            overflow: hidden;
-        }
-        
-        #animation-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
+            overflow-x: hidden;
+            /* Background effects */
+            background-image:
+                radial-gradient(ellipse at center, rgba(176, 196, 222, 0.03), transparent 80%),
+                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255, 255, 255, var(--scanline-opacity)) 1px, rgba(255, 255, 255, var(--scanline-opacity)) 2px);
+            animation: noise 1s steps(2) infinite;
         }
 
-        .container, footer {
-            position: relative;
-            z-index: 1;
+        @keyframes noise {
+            0%, 100% { background-position: 0 0, 0 0; }
+            50% { background-position: 50% 50%, 10px 10px; }
         }
 
         .container {
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 4vw;
+            display: grid;
+            grid-template-columns: 1fr 2px 1.5fr;
+            grid-gap: 2rem;
             min-height: 90vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: flex-start;
-            background-color: rgba(0, 0, 0, 0.7);
         }
 
-        h1 {
+        .left-pane, .right-pane {
+            padding-top: 2rem;
+        }
+        
+        .divider {
+            background-color: var(--secondary-text-color);
+            opacity: 0.3;
+            width: 1px;
+            height: 100%;
+            margin: 0 auto;
+        }
+
+        header h1 {
             font-family: var(--font-display);
-            font-size: 2.5rem;
+            font-size: 3rem;
             color: var(--accent-color);
             text-transform: uppercase;
             margin: 0 0 2rem 0;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
             font-weight: normal;
-            border-bottom: 1px solid var(--secondary-text-color);
-            padding-bottom: 0.5rem;
-            align-self: stretch;
         }
         
-        p {
+        header h1 .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 2.8rem;
+            background-color: var(--accent-color);
+            animation: blink 1s steps(2) infinite;
+            margin-left: 8px;
+            vertical-align: bottom;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        nav a {
+            color: var(--main-text-color);
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        nav a:before {
+            content: '[0' counter(nav-item) '] ';
+            counter-increment: nav-item;
+            color: var(--secondary-text-color);
+        }
+
+        nav a:hover, nav a:focus {
+            color: #fff;
+            background-color: rgba(61, 139, 255, 0.1);
+        }
+
+        .content h2 {
+            color: var(--accent-color);
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            font-weight: normal;
+            letter-spacing: 2px;
+            border-bottom: 1px solid var(--secondary-text-color);
+            padding-bottom: 0.5rem;
+            margin-top: 3rem;
+        }
+
+        .content p {
             margin-bottom: 1.5rem;
-            width: 100%;
+        }
+        
+        .meta-data {
+            font-size: 0.9rem;
+            color: var(--secondary-text-color);
+            border: 1px solid var(--secondary-text-color);
+            padding: 1rem;
+            margin-top: 3rem;
+            background-color: rgba(61, 139, 255, 0.05);
+        }
+        
+        .meta-data span {
+            display: block;
         }
         
         footer {
             text-align: center;
-            padding: 2rem 0;
+            padding: 2rem;
             font-size: 0.9rem;
             color: var(--secondary-text-color);
-            margin-top: auto;
-            width: 100%;
         }
 
         @media (max-width: 768px) {
-            h1 {
-                font-size: 2rem;
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .divider {
+                display: none;
+            }
+            header h1 {
+                font-size: 2.5rem;
+            }
+            header h1 .cursor {
+                height: 2.3rem;
             }
         }
     </style>
 </head>
 <body>
 
-    <canvas id="animation-canvas"></canvas>
-
     <div class="container">
-        <h1>[message_of_the_day]</h1>
-        <p>Today I was supposed to have plans with Arty, but I ended up not feeling very social so I cancelled. I rotted my brain on the computer instead with some friends, and it was nice. I feel relieved to not have to worry about my phone throughout the day.</p>
-        <p>Work has been stressing me out but I think I can tell that it will get better once they hire the new person and the semester starts. It'll go back to chilling all day. I just need to get there and do what I need to.</p>
+        <div class="left-pane">
+            <header>
+                <h1>NONAMER.XYZ<span class="cursor"></span></h1>
+            </header>
+            <nav>
+                <a href="#link1">Protocol</a>
+                <a href="#link2">Schema</a>
+                <a href="#link3">Trace</a>
+                <a href="kittyman">Kittyman</a>
+            </nav>
+            
+            <div class="meta-data">
+                <span>NODE: 7A5-E4</span>
+                <span>STATUS: nominal</span>
+                <span>UPTIME: 48:15:32</span>
+                <span>TX/RX: 89%/92%</span>
+            </div>
+        </div>
+        
+        <div class="divider"></div>
+
+        <div class="right-pane">
+            <main class="content">
+                <h2>THE_GREAT_FILTER</h2>
+                <p>There are more stars in the universe than grains of sand on the beaches of earth. Many of these stars, like our own, host numerous planets with some having the necessary conditions that would allow for life to exist. With this in mind, we would expect life to be a common commodity, however, we instead find ourselves alone in the cosmos. Enrico Fermi famously asked the obvious question: "Where is everyone?". </p>
+				<p>Many theories have been brought up about why we can't find other intelligent life, and I am looking to collect as many of them as possible. If you have any ideas I would an email at nnonamerr@proton.me</p>
+
+            </main>
+        </div>
     </div>
     
     <footer>
-        <p>
+        <p>// system cascade complete //</p>
     </footer>
-
-    <script>
-        const canvas = document.getElementById('animation-canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        const charWidth = 30; // Width of each ASCII character block
-        const charHeight = 50; // Height of each ASCII character block
-        const charSpacing = 10; // Spacing between character blocks
-
-        const asciiDigits = {
-            '0': [" *** ","*   *","*   *","*   *"," *** "],'1': ["  *  "," **  ","  *  ","  *  "," *** "],'2': [" *** ","*   *","  ** "," *   ","*****"],'3': [" *** ","*   *","  ** ","*   *"," *** "],'4': ["*   *","*   *","*****","    *","    *"],'5': ["*****","*    ","**** ","    *","**** "],'6': [" *** ","*    ","**** ","*   *"," *** "],'7': ["*****","    *","   * ","  *  "," *   "],'8': [" *** ","*   *"," *** ","*   *"," *** "],'9': [" *** ","*   *"," **** ","    *"," *** "],':': ["     ","  *  ","     ","  *  ","     "]
-        };
-
-        const drawAsciiChar = (char, startX, startY, color) => {
-            const pattern = asciiDigits[char];
-            if (!pattern) return;
-
-            ctx.fillStyle = color;
-            const dotRadius = (charWidth / 5) / 2;
-
-            for (let r = 0; r < pattern.length; r++) {
-                for (let c = 0; c < pattern[r].length; c++) {
-                    if (pattern[r][c] === '*') {
-                        ctx.beginPath();
-                        ctx.arc(startX + c * (charWidth / 5) + dotRadius, startY + r * (charHeight / 5) + dotRadius, dotRadius, 0, 2 * Math.PI);
-                        ctx.fill();
-                    }
-                }
-            }
-        };
-
-        function drawClock() {
-            ctx.globalAlpha = 0.3; // Make text semi-transparent
-            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--background-color');
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.globalAlpha = 1; // Reset alpha
-
-            const now = new Date();
-            let hours = now.getHours();
-            let minutes = now.getMinutes();
-            let seconds = now.getSeconds();
-
-            hours = hours < 10 ? '0' + hours : '' + hours;
-            minutes = minutes < 10 ? '0' + minutes : '' + minutes;
-            seconds = seconds < 10 ? '0' + seconds : '' + seconds;
-
-            const timeString = `${hours}:${minutes}:${seconds}`;
-
-            let totalClockWidth = 0;
-            for (let i = 0; i < timeString.length; i++) {
-                totalClockWidth += (timeString[i] === ':') ? (charWidth / 5) * 5 + charSpacing : charWidth + charSpacing;
-            }
-            totalClockWidth -= charSpacing;
-
-            const startX = (canvas.width - totalClockWidth) / 2;
-            const startY = (canvas.height - charHeight) / 2;
-
-            let currentX = startX;
-            const clockColor = getComputedStyle(document.documentElement).getPropertyValue('--highlight-color');
-
-            // Add glow effect for the clock
-            ctx.shadowColor = clockColor;
-            ctx.shadowBlur = 10;
-
-            for (let i = 0; i < timeString.length; i++) {
-                const char = timeString[i];
-                drawAsciiChar(char, currentX, startY, clockColor);
-                currentX += (char === ':') ? (charWidth / 5) * 5 + charSpacing : charWidth + charSpacing;
-            }
-
-            // Reset shadow
-            ctx.shadowBlur = 0;
-        }
-
-        const characters = '■□▲▼◆●◦←→↑↓ΣΩΦδαβγθλπμξψABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        const charArray = characters.split('');
-
-        const fontSize = 16;
-        let columns = Math.floor(canvas.width / fontSize);
-        let rows = Math.floor(canvas.height / fontSize);
-
-        const particles = [];
-
-        class Particle {
-            constructor(x, y, char, color) {
-                this.x = x;
-                this.y = y;
-                this.char = char;
-                this.color = color;
-                this.lifespan = 100;
-                this.initialLifespan = 100;
-            }
-
-            draw() {
-                const opacity = Math.max(0, this.lifespan / this.initialLifespan);
-                ctx.fillStyle = `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${opacity})`;
-                ctx.fillText(this.char, this.x * fontSize, this.y * fontSize);
-            }
-
-            update() {
-                this.lifespan -= 1;
-            }
-        }
-
-        function animate() {
-            drawClock();
-
-            const newParticleCount = 3;
-            for (let i = 0; i < newParticleCount; i++) {
-                const x = Math.floor(Math.random() * columns);
-                const y = Math.floor(Math.random() * rows);
-                const char = charArray[Math.floor(Math.random() * charArray.length)];
-                const color = { r: 61, g: 139, b: 255 };
-                particles.push(new Particle(x, y, char, color));
-            }
-
-            for (let i = particles.length - 1; i >= 0; i--) {
-                const p = particles[i];
-                p.update();
-                p.draw();
-                
-                if (p.lifespan <= 0) {
-                    particles.splice(i, 1);
-                }
-            }
-            requestAnimationFrame(animate);
-        }
-
-        ctx.font = fontSize + 'px ' + getComputedStyle(document.body).fontFamily;
-        animate();
-
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            columns = Math.floor(canvas.width / fontSize);
-            rows = Math.floor(canvas.height / fontSize);
-            particles.length = 0;
-            ctx.font = fontSize + 'px ' + getComputedStyle(document.body).fontFamily;
-        });
-    </script>
 
 </body>
 </html>
