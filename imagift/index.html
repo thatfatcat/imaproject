@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="3600"> <!-- Refresh every hour -->
-    <title>ASCII Clock - Animation 99</title>
+    <meta http-equiv="refresh" content="3600">
+    <title>Hourly Refresh Clock</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Xanh+Mono:ital@0;1&display=swap');
+
         :root {
             --background-color: #000000; /* Pure black for terminal feel */
             --main-text-color: #b0c4de;
-            --accent-color: #00FF00; /* Bright green for base terminal text */
+            --accent-color: #3d8bff; /* Blue to match particles */
             --highlight-color: #FFFF00; /* Yellow for clock display */
             --secondary-text-color: #6a7380;
             --scanline-opacity: 0.05;
@@ -18,27 +19,93 @@
             --font-primary: 'Xanh Mono', 'Courier New', monospace;
             --font-display: 'VT323', monospace;
         }
+
         body, html {
-            height: 100%; margin: 0; padding: 0; background-color: var(--background-color);
-            color: var(--main-text-color); font-family: var(--font-primary); font-size: 16px;
-            line-height: 1.7; overflow: hidden;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--main-text-color);
+            font-family: var(--font-primary);
+            font-size: 16px;
+            line-height: 1.7;
+            overflow: hidden;
         }
-        #animation-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
-        .container, footer { position: relative; z-index: 1; }
-        .container { max-width: 800px; margin: 0 auto; padding: 4vw; min-height: 90vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: flex-start; background-color: rgba(0, 0, 0, 0.7); }
-        h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-color); text-transform: uppercase; margin: 0 0 2rem 0; letter-spacing: 2px; font-weight: normal; border-bottom: 1px solid var(--secondary-text-color); padding-bottom: 0.5rem; align-self: stretch; }
-        p { margin-bottom: 1.5rem; width: 100%; }
-        footer { text-align: center; padding: 2rem 0; font-size: 0.9rem; color: var(--secondary-text-color); margin-top: auto; width: 100%; }
-        @media (max-width: 768px) { h1 { font-size: 2rem; } }
+        
+        #animation-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .container, footer {
+            position: relative;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4vw;
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            margin: 0 0 2rem 0;
+            letter-spacing: 2px;
+            font-weight: normal;
+            border-bottom: 1px solid var(--secondary-text-color);
+            padding-bottom: 0.5rem;
+            align-self: stretch;
+        }
+        
+        p {
+            margin-bottom: 1.5rem;
+            width: 100%;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            font-size: 0.9rem;
+            color: var(--secondary-text-color);
+            margin-top: auto;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+        }
     </style>
 </head>
 <body>
+
     <canvas id="animation-canvas"></canvas>
+
     <div class="container">
         <h1>[message_of_the_day]</h1>
-        <p>Today Dimitri came over and we started a D&D campaign with him as dungeon master. I'm excited about it. I feel like I'm doing so socially well at the moment. Good morning!</p>
+        <p>Today I was supposed to have plans with Arty, but I ended up not feeling very social so I cancelled. I rotted my brain on the computer instead with some friends, and it was nice. I feel relieved to not have to worry about my phone throughout the day.</p>
+        <p>Work has been stressing me out but I think I can tell that it will get better once they hire the new person and the semester starts. It'll go back to chilling all day. I just need to get there and do what I need to.</p>
     </div>
-    <footer><p>
+    
+    <footer>
+        <p>
+    </footer>
+
     <script>
         const canvas = document.getElementById('animation-canvas');
         const ctx = canvas.getContext('2d');
@@ -49,85 +116,8 @@
         const charHeight = 50; // Height of each ASCII character block
         const charSpacing = 10; // Spacing between character blocks
 
-        // ASCII art for digits 0-9 and colon (each string is a row, 5x5 grid)
         const asciiDigits = {
-            '0': [
-                " *** ",
-                "*   *",
-                "*   *",
-                "*   *",
-                " *** "
-            ],
-            '1': [
-                "  *  ",
-                " **  ",
-                "  *  ",
-                "  *  ",
-                " *** "
-            ],
-            '2': [
-                " *** ",
-                "*   *",
-                "  ** ",
-                " *   ",
-                "*****"
-            ],
-            '3': [
-                " *** ",
-                "*   *",
-                "  ** ",
-                "*   *",
-                " *** "
-            ],
-            '4': [
-                "*   *",
-                "*   *",
-                "*****",
-                "    *",
-                "    *"
-            ],
-            '5': [
-                "*****",
-                "*    ",
-                "**** ",
-                "    *",
-                "**** "
-            ],
-            '6': [
-                " *** ",
-                "*    ",
-                "**** ",
-                "*   *",
-                " *** "
-            ],
-            '7': [
-                "*****",
-                "    *",
-                "   * ",
-                "  *  ",
-                " *   "
-            ],
-            '8': [
-                " *** ",
-                "*   *",
-                " *** ",
-                "*   *",
-                " *** "
-            ],
-            '9': [
-                " *** ",
-                "*   *",
-                " **** ",
-                "    *",
-                " *** "
-            ],
-            ':': [
-                "     ",
-                "  *  ",
-                "     ",
-                "  *  ",
-                "     "
-            ]
+            '0': [" *** ","*   *","*   *","*   *"," *** "],'1': ["  *  "," **  ","  *  ","  *  "," *** "],'2': [" *** ","*   *","  ** "," *   ","*****"],'3': [" *** ","*   *","  ** ","*   *"," *** "],'4': ["*   *","*   *","*****","    *","    *"],'5': ["*****","*    ","**** ","    *","**** "],'6': [" *** ","*    ","**** ","*   *"," *** "],'7': ["*****","    *","   * ","  *  "," *   "],'8': [" *** ","*   *"," *** ","*   *"," *** "],'9': [" *** ","*   *"," **** ","    *"," *** "],':': ["     ","  *  ","     ","  *  ","     "]
         };
 
         const drawAsciiChar = (char, startX, startY, color) => {
@@ -135,41 +125,41 @@
             if (!pattern) return;
 
             ctx.fillStyle = color;
+            const dotRadius = (charWidth / 5) / 2;
+
             for (let r = 0; r < pattern.length; r++) {
                 for (let c = 0; c < pattern[r].length; c++) {
                     if (pattern[r][c] === '*') {
-                        ctx.fillRect(startX + c * (charWidth / 5), startY + r * (charHeight / 5), (charWidth / 5), (charHeight / 5));
+                        ctx.beginPath();
+                        ctx.arc(startX + c * (charWidth / 5) + dotRadius, startY + r * (charHeight / 5) + dotRadius, dotRadius, 0, 2 * Math.PI);
+                        ctx.fill();
                     }
                 }
             }
         };
 
         function drawClock() {
+            ctx.globalAlpha = 0.3; // Make text semi-transparent
             ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--background-color');
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.globalAlpha = 1; // Reset alpha
 
             const now = new Date();
             let hours = now.getHours();
             let minutes = now.getMinutes();
             let seconds = now.getSeconds();
 
-            // Format HH:MM:SS
             hours = hours < 10 ? '0' + hours : '' + hours;
             minutes = minutes < 10 ? '0' + minutes : '' + minutes;
             seconds = seconds < 10 ? '0' + seconds : '' + seconds;
 
             const timeString = `${hours}:${minutes}:${seconds}`;
 
-            // Calculate total width of the clock display
             let totalClockWidth = 0;
             for (let i = 0; i < timeString.length; i++) {
-                if (timeString[i] === ':') {
-                    totalClockWidth += (charWidth / 5) * 5 + charSpacing; // Colon is also 5px wide
-                } else {
-                    totalClockWidth += charWidth + charSpacing;
-                }
+                totalClockWidth += (timeString[i] === ':') ? (charWidth / 5) * 5 + charSpacing : charWidth + charSpacing;
             }
-            totalClockWidth -= charSpacing; // Remove last spacing
+            totalClockWidth -= charSpacing;
 
             const startX = (canvas.width - totalClockWidth) / 2;
             const startY = (canvas.height - charHeight) / 2;
@@ -177,29 +167,86 @@
             let currentX = startX;
             const clockColor = getComputedStyle(document.documentElement).getPropertyValue('--highlight-color');
 
+            // Add glow effect for the clock
+            ctx.shadowColor = clockColor;
+            ctx.shadowBlur = 10;
+
             for (let i = 0; i < timeString.length; i++) {
                 const char = timeString[i];
                 drawAsciiChar(char, currentX, startY, clockColor);
-                if (char === ':') {
-                    currentX += (charWidth / 5) * 5 + charSpacing;
-                } else {
-                    currentX += charWidth + charSpacing;
-                }
+                currentX += (char === ':') ? (charWidth / 5) * 5 + charSpacing : charWidth + charSpacing;
+            }
+
+            // Reset shadow
+            ctx.shadowBlur = 0;
+        }
+
+        const characters = '■□▲▼◆●◦←→↑↓ΣΩΦδαβγθλπμξψABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const charArray = characters.split('');
+
+        const fontSize = 16;
+        let columns = Math.floor(canvas.width / fontSize);
+        let rows = Math.floor(canvas.height / fontSize);
+
+        const particles = [];
+
+        class Particle {
+            constructor(x, y, char, color) {
+                this.x = x;
+                this.y = y;
+                this.char = char;
+                this.color = color;
+                this.lifespan = 100;
+                this.initialLifespan = 100;
+            }
+
+            draw() {
+                const opacity = Math.max(0, this.lifespan / this.initialLifespan);
+                ctx.fillStyle = `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${opacity})`;
+                ctx.fillText(this.char, this.x * fontSize, this.y * fontSize);
+            }
+
+            update() {
+                this.lifespan -= 1;
             }
         }
 
         function animate() {
             drawClock();
+
+            const newParticleCount = 3;
+            for (let i = 0; i < newParticleCount; i++) {
+                const x = Math.floor(Math.random() * columns);
+                const y = Math.floor(Math.random() * rows);
+                const char = charArray[Math.floor(Math.random() * charArray.length)];
+                const color = { r: 61, g: 139, b: 255 };
+                particles.push(new Particle(x, y, char, color));
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                p.draw();
+                
+                if (p.lifespan <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
             requestAnimationFrame(animate);
         }
-        
-        animate(); // Start the animation loop
+
+        ctx.font = fontSize + 'px ' + getComputedStyle(document.body).fontFamily;
+        animate();
 
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            // No need to re-initialize character data, just redraw
+            columns = Math.floor(canvas.width / fontSize);
+            rows = Math.floor(canvas.height / fontSize);
+            particles.length = 0;
+            ctx.font = fontSize + 'px ' + getComputedStyle(document.body).fontFamily;
         });
     </script>
+
 </body>
 </html>
