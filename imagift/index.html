@@ -76,6 +76,14 @@
             width: 100%;
         }
         
+        #daily-image {
+            display: block;
+            max-width: 100%;
+            max-height: 65vh;
+            margin: 0 auto 1.5rem auto;
+            border: 1px solid var(--secondary-text-color);
+        }
+
         footer {
             text-align: center;
             padding: 2rem 0;
@@ -98,7 +106,8 @@
 
     <div class="container">
         <h1>[message_of_the_day]</h1>
-        <p> I'm so excited to be in Switzerland. So so so so so excited you guys cannot even begin to imagine. I need this so bad. However, there's still so much that I need to do before then.</p>
+        <p id="motd"> I'm so excited to be in Switzerland. So so so so so excited you guys cannot even begin to imagine. I need this so bad. However, there's still so much that I need to do before then.</p>
+        <!--image--><!--/image-->
     </div>
     
     <footer>
@@ -110,6 +119,9 @@
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+
+        // When the page has a picture of the day, it replaces the clock.
+        const showClock = !document.getElementById('daily-image');
 
         const charWidth = 30; // Width of each ASCII character block
         const charHeight = 50; // Height of each ASCII character block
@@ -142,6 +154,7 @@
             ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--background-color');
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.globalAlpha = 1; // Reset alpha
+            if (!showClock) return;
 
             const now = new Date();
             let hours = now.getHours();
