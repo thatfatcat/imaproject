@@ -1,5 +1,5 @@
 // Network first, so a new version shows up right away; falls back to the cache when offline.
-const CACHE = 'daily-v1';
+const CACHE = 'daily-v2';
 const SHELL = ['./', 'index.html', 'app.js', 'mqtt.min.js', 'manifest.webmanifest', 'icon-192.png', 'apple-touch-icon.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => {
