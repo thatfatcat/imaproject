@@ -28,7 +28,7 @@ function showTab(name) {
 tabs.forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
 // ---------- settings form ----------
-const FIELDS = ['ghtoken', 'ghrepo', 'ghbranch', 'ghpath', 'mqhost', 'mqport', 'mquser', 'mqpass', 'mqfrom'];
+const FIELDS = ['ghtoken', 'ghrepo', 'ghbranch', 'ghpath', 'mqhost', 'mqport', 'mquser', 'mqpass'];
 FIELDS.forEach((f) => { $(f).value = cfg[f]; });
 $('save').addEventListener('click', () => {
   FIELDS.forEach((f) => { cfg[f] = $(f).value.trim(); });
@@ -295,8 +295,8 @@ $('send').addEventListener('click', () => {
   const c = mqttConnect();
   if (!c) return;
   const dev = cfg.device || 'epaper';
-  const id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()).replace(/-/g, '').slice(0, 16);
-  const payload = JSON.stringify({ v: 1, id, from: cfg.mqfrom || 'phone', ts: Math.floor(Date.now() / 1000), type: 'text', text });
+  // Plain text: the e-paper board shows the payload as-is, and the C6 accepts plain text too.
+  const payload = text;
   $('send').disabled = true;
   mqttState(c.connected ? 'Sending…' : 'Waiting for broker…', c.connected ? 'on' : '');
   // QoS 1: the callback fires once the broker has the message; the board gets it even if it's asleep.
